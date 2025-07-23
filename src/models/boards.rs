@@ -1,5 +1,6 @@
 use sea_orm::entity::prelude::*;
-pub use super::_entities::boards::{ActiveModel, Model, Entity};
+pub use super::_entities::boards::{self, ActiveModel, Model, Entity};
+use loco_rs::prelude::*;
 pub type Boards = Entity;
 
 #[async_trait::async_trait]
@@ -19,7 +20,13 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 // implement your read-oriented logic here
-impl Model {}
+impl Model {
+    /// Find all boards
+    pub async fn find_all(db: &DatabaseConnection) -> ModelResult<Vec<Self>> {
+        let boards = Entity::find().all(db).await?;
+        Ok(boards)
+    }
+}
 
 // implement your write-oriented logic here
 impl ActiveModel {}
