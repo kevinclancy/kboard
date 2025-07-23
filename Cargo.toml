@@ -1,11 +1,11 @@
 [workspace]
 
 [package]
-name = "loco-auth-tutorial-2"
+name = "kboard"
 version = "0.1.0"
 edition = "2021"
 publish = false
-default-run = "loco_auth_tutorial_2-cli"
+default-run = "kboard-cli"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -38,7 +38,7 @@ include_dir = { version = "0.7" }
 axum-extra = { version = "0.10", features = ["form"] }
 
 [[bin]]
-name = "loco_auth_tutorial_2-cli"
+name = "kboard-cli"
 path = "src/bin/main.rs"
 required-features = []
 

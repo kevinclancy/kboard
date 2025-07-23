@@ -1956,6 +1956,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "kboard"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "axum-extra",
+ "chrono",
+ "include_dir",
+ "insta",
+ "loco-rs",
+ "migration",
+ "regex",
+ "rstest",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "serial_test",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "validator",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2030,31 +2055,6 @@ checksum = "96936507f153605bddfcda068dd804796c84324ed2510809e5b2a624c81da765"
 dependencies = [
  "autocfg",
  "scopeguard",
-]
-
-[[package]]
-name = "loco-auth-tutorial-2"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum",
- "axum-extra",
- "chrono",
- "include_dir",
- "insta",
- "loco-rs",
- "migration",
- "regex",
- "rstest",
- "sea-orm",
- "serde",
- "serde_json",
- "serial_test",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "validator",
 ]
 
 [[package]]

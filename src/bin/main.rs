@@ -1,4 +1,4 @@
-use loco_auth_tutorial_2::app::App;
+use kboard::app::App;
 use loco_rs::cli;
 use migration::Migrator;
 

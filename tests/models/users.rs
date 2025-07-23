@@ -1,6 +1,6 @@
 use chrono::{offset::Local, Duration};
 use insta::assert_debug_snapshot;
-use loco_auth_tutorial_2::{
+use kboard::{
     app::App,
     models::users::{self, Model, RegisterParams},
 };

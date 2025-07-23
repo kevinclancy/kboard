@@ -1,4 +1,4 @@
-use loco_auth_tutorial_2::app::App;
+use kboard::app::App;
 #[allow(unused_imports)]
 use loco_rs::{cli::playground, prelude::*};
 
