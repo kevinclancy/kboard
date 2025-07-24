@@ -62,6 +62,9 @@ export function KBoard({ initialUIState }: KBoardProps) {
             <Box />
           )}
           <HStack>
+            <Button bgColor="brown" onClick={() => setUIState({ type: "board" })}>
+              Discussion Boards
+            </Button>
             {authState.type === "logged_out" && (
               <Button bgColor="brown" onClick={() => setUIState({ type: "login" })}>
                 Login

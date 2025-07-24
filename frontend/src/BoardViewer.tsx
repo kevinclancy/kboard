@@ -61,7 +61,7 @@ export function BoardViewer() {
   return (
     <Box p={4}>
       <Text fontSize="2xl" fontWeight="bold" mb={4}>
-        Boards
+        Discussion Boards
       </Text>
       <VStack align="stretch" gap={2}>
         {boards.length === 0 ? (
