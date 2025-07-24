@@ -7,6 +7,7 @@ mod m20250723_015415_boards;
 mod m20250723_021723_threads;
 mod m20250723_205012_replies;
 mod m20250724_035331_add_last_active_to_threads;
+mod m20250724_040020_create_thread_board_active_index;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -18,6 +19,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250723_021723_threads::Migration),
             Box::new(m20250723_205012_replies::Migration),
             Box::new(m20250724_035331_add_last_active_to_threads::Migration),
+            Box::new(m20250724_040020_create_thread_board_active_index::Migration),
             // inject-above (do not remove this comment)
         ]
     }
