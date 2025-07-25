@@ -1,4 +1,4 @@
-use sea_orm_migration::{prelude::*, schema::*};
+use sea_orm_migration::{prelude::*};
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -6,10 +6,10 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, m: &SchemaManager) -> Result<(), DbErr> {
-        let _ = m
-            .get_connection()
+        let db = m.get_connection();
+        let _ = db
             .execute_unprepared("CREATE INDEX thread_board_active_index ON threads (board_id, last_active);")
-            .await;
+            .await?;
         Ok(())
     }
 
@@ -17,7 +17,7 @@ impl MigrationTrait for Migration {
         let _ = m
             .get_connection()
             .execute_unprepared("DROP INDEX thread_board_active_index ON threads;")
-            .await;
+            .await?;
         Ok(())
     }
 }
