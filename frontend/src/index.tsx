@@ -1,8 +1,21 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
-import { KBoard } from "./KBoard";
+import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
+import { KBoard, UIState } from "./KBoard";
 import system from "./theme";
+
+function DiscussionBoardPage() {
+  const { boardId } = useParams<{ boardId: string }>();
+  const boardIdNum = Number(boardId) || 0;
+
+  const uiState: UIState = {
+    type: "discussion_board",
+    boardId: boardIdNum
+  };
+
+  return <KBoard uiState={uiState} />;
+}
 
 const root = document.getElementById("root");
 
@@ -10,23 +23,20 @@ if (!root) {
   throw new Error("No root element found");
 }
 
-const pathSegment = window.location.pathname.split("/").pop() || "";
-console.log("pathname: " + window.location.pathname);
-const isResetPage = pathSegment.startsWith("reset");
-console.log("path segment: " + pathSegment);
-const getInitialUIState = () => {
-  if (isResetPage) {
-    const resetKey = window.location.hash.substring(1); // Remove "reset" prefix
-    console.log("reset key is " + resetKey);
-    return { type: "new_password" as const, resetKey };
-  }
-  return { type: "board" as const };
-};
-
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <ChakraProvider value={system}>
-      <KBoard initialUIState={getInitialUIState()} />
-    </ChakraProvider>
+    <BrowserRouter>
+      <ChakraProvider value={system}>
+        <Routes>
+          <Route path="/register" element={<KBoard uiState={{ type: "register" }} />} />
+          <Route path="/boards" element={<KBoard uiState={{ type: "board" }} />} />
+          <Route path="/boards/:boardId/threads" element={<DiscussionBoardPage />} />
+          <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
+          <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
+          <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />
+          <Route path="*" element={<KBoard uiState={{ type: "board" }} />} />
+        </Routes>
+      </ChakraProvider>
+    </BrowserRouter>
   </React.StrictMode>,
 );

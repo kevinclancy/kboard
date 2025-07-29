@@ -1,6 +1,7 @@
 import { Box, Button, Fieldset, Heading, HStack, Input, Stack } from "@chakra-ui/react";
 import React, { useState } from "react";
 import { Field } from "./components/ui/field";
+import { API_ROOT } from "./config";
 
 export function ResetPasswordForm() {
     const [email, setEmail] = useState("");
@@ -10,7 +11,7 @@ export function ResetPasswordForm() {
         e.preventDefault();
 
         try {
-            const response = await fetch("http://127.0.0.1:5150/api/auth/forgot", {
+            const response = await fetch(`${API_ROOT}/auth/forgot`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -2,6 +2,7 @@ import { Box, Button, Fieldset, Heading, HStack, Stack } from "@chakra-ui/react"
 import React, { useState } from "react";
 import { Field } from "./components/ui/field";
 import { PasswordInput } from "./components/ui/password-input";
+import { API_ROOT } from "./config";
 
 interface NewPasswordFormProps {
   resetKey: string;
@@ -21,7 +22,7 @@ export function NewPasswordForm({ resetKey }: NewPasswordFormProps) {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5150/api/auth/reset", {
+      const response = await fetch(`${API_ROOT}/auth/reset`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

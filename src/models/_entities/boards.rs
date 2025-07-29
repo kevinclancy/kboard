@@ -13,6 +13,7 @@ pub struct Model {
     pub title: String,
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    pub num_threads: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -12,21 +12,13 @@ pub struct Model {
     pub id: i32,
     #[sea_orm(column_type = "Text")]
     pub body: String,
+    pub reply_to: Option<i32>,
     pub thread_id: i32,
-    pub reply_to: i32,
     pub poster: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(
-        belongs_to = "Entity",
-        from = "Column::ReplyTo",
-        to = "Column::Id",
-        on_update = "Cascade",
-        on_delete = "Cascade"
-    )]
-    SelfRef,
     #[sea_orm(
         belongs_to = "super::threads::Entity",
         from = "Column::ThreadId",

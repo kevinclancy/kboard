@@ -16,6 +16,7 @@ pub struct Model {
     pub board_id: i32,
     pub poster: i32,
     pub last_active: DateTime,
+    pub num_replies: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

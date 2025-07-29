@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { Box, Button, HStack, Separator, Stack } from "@chakra-ui/react";
+import { Link } from "react-router-dom";
 import { RegisterForm } from "./RegisterForm";
 import { BoardViewer } from "./BoardViewer";
+import { DiscussionBoard } from "./DiscussionBoard";
 import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
@@ -12,9 +14,11 @@ type AuthState =
   // User is authenticated with token and username
   | { type: "logged_in"; token: string; username: string };
 
-type UIState =
+export type UIState =
   // Main board interface is displayed
   | { type: "board" }
+  // Specific discussion board is displayed
+  | { type: "discussion_board"; boardId: number }
   // Registration form is displayed
   | { type: "register" }
   // Login form is displayed
@@ -22,25 +26,25 @@ type UIState =
   // Reset password form is displayed
   | { type: "reset_password" }
   // New password with key is displayed
-  | { type: "new_password"; resetKey: string };
+  | { type: "new_password" };
 
 interface KBoardProps {
-  initialUIState?: UIState;
+  uiState: UIState;
 }
 
-export function KBoard({ initialUIState }: KBoardProps) {
+export function KBoard({ uiState }: KBoardProps) {
   const [authState, setAuthState] = useState<AuthState>({ type: "logged_out" });
-  const [uiState, setUIState] = useState<UIState>(initialUIState || { type: "board" });
 
   const handleLogin = (token: string, username: string) => {
     setAuthState({ type: "logged_in", token, username });
-    setUIState({ type: "board" });
   };
 
   const mainContent = (() => {
     switch (uiState.type) {
       case "board":
         return <BoardViewer />;
+      case "discussion_board":
+        return <DiscussionBoard boardId={uiState.boardId} />;
       case "register":
         return <RegisterForm />;
       case "login":
@@ -48,7 +52,8 @@ export function KBoard({ initialUIState }: KBoardProps) {
       case "reset_password":
         return <ResetPasswordForm />;
       case "new_password":
-        return <NewPasswordForm resetKey={uiState.resetKey} />;
+        const resetKey = window.location.hash.substring(1);
+        return <NewPasswordForm resetKey={resetKey} />;
     }
   })();
 
@@ -62,16 +67,24 @@ export function KBoard({ initialUIState }: KBoardProps) {
             <Box />
           )}
           <HStack>
-            <Button bgColor="brown" onClick={() => setUIState({ type: "board" })}>
-              Discussion Boards
-            </Button>
-            {authState.type === "logged_out" && (
-              <Button bgColor="brown" onClick={() => setUIState({ type: "login" })}>
-                Login
+            <Link to="/boards">
+              <Button bgColor="brown">
+                Discussion Boards
               </Button>
+            </Link>
+            {authState.type === "logged_out" && (
+              <Link to="/login">
+                <Button bgColor="brown">
+                  Login
+                </Button>
+              </Link>
             )}
-            <Button bgColor="brown" onClick={() => setUIState({ type: "register" })}>Register</Button>
-            <Button bgColor="brown" onClick={() => setUIState({ type: "reset_password" })}>Reset Password</Button>
+            <Link to="/register">
+              <Button bgColor="brown">Register</Button>
+            </Link>
+            <Link to="/request_reset">
+              <Button bgColor="brown">Reset Password</Button>
+            </Link>
           </HStack>
         </HStack>
         <Separator borderColor="gray" orientation='horizontal' size = "md" />

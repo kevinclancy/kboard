@@ -1,5 +1,7 @@
 import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { API_ROOT } from "./config";
 
 interface Board {
   id: number;
@@ -17,10 +19,10 @@ export function BoardViewer() {
   useEffect(() => {
     const fetchBoards = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5150/api/boards', {
+        const response = await fetch(`${API_ROOT}/boards`, {
           method: "GET",
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
         });
 
@@ -68,15 +70,23 @@ export function BoardViewer() {
           <Text color="gray.500">No boards found</Text>
         ) : (
           boards.map((board) => (
-            <Box
+            <Link
               key={board.id}
-              p={3}
-              borderWidth={1}
-              borderRadius="md"
-              bg="gray.50"
+              to={`/boards/${board.id}/threads`}
             >
-              <Text fontWeight="semibold">{board.title}</Text>
-            </Box>
+              <Box
+                p={3}
+                borderWidth={1}
+                borderRadius="md"
+                bg="gray.50"
+                _hover={{ bg: "gray.100" }}
+                cursor="pointer"
+              >
+                <Text fontWeight="semibold" color="blue.600" _hover={{ color: "blue.800" }}>
+                  {board.title}
+                </Text>
+              </Box>
+            </Link>
           ))
         )}
       </VStack>

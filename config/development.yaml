@@ -24,6 +24,8 @@ server:
   host: 127.0.0.1
   # Out of the box middleware configuration. to disable middleware you can changed the `enable` field to `false` of comment the middleware block
   middlewares:
+    cors:
+      enable: true
     fallback:
       enable: false
     static:

@@ -2,6 +2,7 @@ import { Box, Button, Fieldset, Heading, HStack, Input, Stack } from "@chakra-ui
 import React, { useState } from "react";
 import { PasswordInput } from "./components/ui/password-input";
 import { Field } from "./components/ui/field";
+import { API_ROOT } from "./config";
 
 interface LoginFormProps {
     onLogin: (token: string, username: string) => void;
@@ -16,7 +17,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         e.preventDefault();
 
         try {
-            const response = await fetch('http://127.0.0.1:5150/api/auth/login', {
+            const response = await fetch(`${API_ROOT}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
