@@ -3,7 +3,7 @@ import { Box, Button, HStack, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
 import { RegisterForm } from "./RegisterForm";
-import { BoardViewer } from "./BoardViewer";
+import { BoardSelector } from "./BoardSelector";
 import { DiscussionBoard } from "./DiscussionBoard";
 import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
@@ -48,7 +48,7 @@ export function KBoard({ uiState }: KBoardProps) {
   const mainContent = (() => {
     switch (uiState.type) {
       case "board":
-        return <BoardViewer />;
+        return <BoardSelector />;
       case "discussion_board":
         return <DiscussionBoard boardId={uiState.boardId} />;
       case "register":

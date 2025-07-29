@@ -1,4 +1,4 @@
-use crate::models::{boards::Model as Board, threads::Entity as ThreadEntity, threads::Model as Thread};
+use crate::models::{boards::Model as Board, threads::Entity as ThreadEntity, threads::ThreadWithPosterName};
 use axum::{debug_handler, extract::Path, extract::Query};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ struct ThreadsQuery {
 
 #[derive(Serialize)]
 struct ThreadsResponse {
-    threads: Vec<Thread>,
+    threads: Vec<ThreadWithPosterName>,
     total_count: u64,
 }
 

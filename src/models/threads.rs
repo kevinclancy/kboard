@@ -1,9 +1,22 @@
 use sea_orm::entity::prelude::*;
-use sea_orm::{QueryFilter, QueryOrder, QuerySelect, Set, TransactionTrait};
+use sea_orm::{QueryFilter, QueryOrder, QuerySelect, Set, TransactionTrait, JoinType};
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 pub use super::_entities::threads::{ActiveModel, Model, Entity, Column};
-use crate::models::{boards, replies};
+use crate::models::{boards, replies, users};
 pub type Threads = Entity;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ThreadWithPosterName {
+    pub id: i32,
+    pub title: String,
+    pub description: String,
+    pub board_id: i32,
+    pub poster: i32,
+    pub poster_username: String,
+    pub last_active: chrono::NaiveDateTime,
+    pub num_replies: i32,
+}
 
 #[async_trait::async_trait]
 impl ActiveModelBehavior for ActiveModel {
@@ -82,14 +95,45 @@ impl Entity {
         board_id: i32,
         page_size: u64,
         page_number: u64,
-    ) -> Result<Vec<Model>, DbErr> {
-        Self::find()
+    ) -> Result<Vec<ThreadWithPosterName>, DbErr> {
+        let threads_with_users = Self::find()
             .filter(Column::BoardId.eq(board_id))
+            .join(JoinType::InnerJoin, crate::models::_entities::threads::Relation::Users.def())
             .order_by_desc(Column::LastActive)
             .offset(page_size * page_number)
             .limit(page_size)
+            .select_only()
+            .columns([
+                Column::Id,
+                Column::Title,
+                Column::Description,
+                Column::BoardId,
+                Column::Poster,
+                Column::LastActive,
+                Column::NumReplies,
+            ])
+            .column_as(users::users::Column::Name, "poster_username")
+            .into_tuple::<(i32, String, String, i32, i32, chrono::NaiveDateTime, i32, String)>()
             .all(db)
-            .await
+            .await?;
+
+        let result = threads_with_users
+            .into_iter()
+            .map(|(id, title, description, board_id, poster, last_active, num_replies, poster_username)| {
+                ThreadWithPosterName {
+                    id,
+                    title,
+                    description,
+                    board_id,
+                    poster,
+                    poster_username,
+                    last_active,
+                    num_replies,
+                }
+            })
+            .collect();
+
+        Ok(result)
     }
 
     pub async fn count_by_board(

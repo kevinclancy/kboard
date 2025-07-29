@@ -14,6 +14,7 @@ interface Thread {
   description: string;
   board_id: number;
   poster: number;
+  poster_username: string;
   last_active: string;
   created_at: string;
   updated_at: string;
@@ -171,7 +172,7 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
                   <Text color="gray.600">{formatDate(thread.last_active)}</Text>
                 </GridItem>
                 <GridItem>
-                  <Text color="gray.600">User {thread.poster}</Text>
+                  <Text color="gray.600">{thread.poster_username}</Text>
                 </GridItem>
               </Grid>
             ))}

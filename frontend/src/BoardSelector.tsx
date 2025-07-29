@@ -11,7 +11,7 @@ interface Board {
   updated_at: string;
 }
 
-export function BoardViewer() {
+export function BoardSelector() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
