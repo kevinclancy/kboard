@@ -24,6 +24,7 @@ export function NewPasswordForm({ resetKey }: NewPasswordFormProps) {
     try {
       const response = await fetch(`${API_ROOT}/auth/reset`, {
         method: "POST",
+        credentials: 'include',
         headers: {
           "Content-Type": "application/json",
         },

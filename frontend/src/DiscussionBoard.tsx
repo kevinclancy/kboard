@@ -47,6 +47,7 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
         const url = `${API_ROOT}/boards/${boardId}/threads?page_size=${pageSize}&page_number=${pageNumber}`;
         const response = await fetch(url, {
           method: "GET",
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -75,6 +76,7 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
       try {
         const response = await fetch(`${API_ROOT}/boards`, {
           method: "GET",
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json',
           },

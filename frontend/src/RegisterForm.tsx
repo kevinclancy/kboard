@@ -23,6 +23,7 @@ export function RegisterForm() {
         try {
             const response = await fetch(`${API_ROOT}/auth/register`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
                 },

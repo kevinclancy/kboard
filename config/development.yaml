@@ -101,3 +101,6 @@ auth:
     secret: qY6ZYEcfOSSBEyCMpFH4
     # Token expiration time in seconds
     expiration: 604800 # 7 days
+    location:
+      from: Cookie
+      name: jwt

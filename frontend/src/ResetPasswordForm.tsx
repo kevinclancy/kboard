@@ -13,6 +13,7 @@ export function ResetPasswordForm() {
         try {
             const response = await fetch(`${API_ROOT}/auth/forgot`, {
                 method: "POST",
+                credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
                 },

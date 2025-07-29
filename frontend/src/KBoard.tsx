@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Button, HStack, Separator, Stack } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
+import Cookies from 'js-cookie';
 import { RegisterForm } from "./RegisterForm";
 import { BoardViewer } from "./BoardViewer";
 import { DiscussionBoard } from "./DiscussionBoard";
@@ -12,7 +13,7 @@ type AuthState =
   // User is not authenticated
   | { type: "logged_out" }
   // User is authenticated with token and username
-  | { type: "logged_in"; token: string; username: string };
+  | { type: "logged_in"; username: string };
 
 export type UIState =
   // Main board interface is displayed
@@ -33,10 +34,15 @@ interface KBoardProps {
 }
 
 export function KBoard({ uiState }: KBoardProps) {
-  const [authState, setAuthState] = useState<AuthState>({ type: "logged_out" });
+  const usernameCookie = Cookies.get('username');
+  const [authState, setAuthState] = useState<AuthState>(
+    usernameCookie
+      ? { type: "logged_in", username: usernameCookie}
+      : { type: "logged_out" }
+  );
 
   const handleLogin = (token: string, username: string) => {
-    setAuthState({ type: "logged_in", token, username });
+    setAuthState({ type: "logged_in", username });
   };
 
   const mainContent = (() => {

@@ -19,6 +19,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         try {
             const response = await fetch(`${API_ROOT}/auth/login`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
                 },

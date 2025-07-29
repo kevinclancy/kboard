@@ -21,6 +21,7 @@ export function BoardViewer() {
       try {
         const response = await fetch(`${API_ROOT}/boards`, {
           method: "GET",
+          credentials: 'include',
           headers: {
             'Content-Type': 'application/json'
           },

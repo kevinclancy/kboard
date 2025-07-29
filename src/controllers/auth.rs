@@ -6,8 +6,9 @@ use crate::{
     },
     views::auth::{CurrentResponse, LoginResponse},
 };
+use time::Duration;
 use axum::debug_handler;
-use loco_rs::prelude::*;
+use loco_rs::{environment, prelude::{cookie::*, *}};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::sync::OnceLock;
@@ -137,7 +138,10 @@ async fn reset(State(ctx): State<AppContext>, Json(params): Json<ResetParams>) -
 
 /// Creates a user login and returns a token
 #[debug_handler]
-async fn login(State(ctx): State<AppContext>, Json(params): Json<LoginParams>) -> Result<Response> {
+async fn login(
+    State(ctx): State<AppContext>,
+    jar: CookieJar,
+    Json(params): Json<LoginParams>) -> Result<(CookieJar, Response)> {
     let Ok(user) = users::Model::find_by_email(&ctx.db, &params.email).await else {
         tracing::debug!(
             email = params.email,
@@ -158,7 +162,27 @@ async fn login(State(ctx): State<AppContext>, Json(params): Json<LoginParams>) -
         .generate_jwt(&jwt_secret.secret, jwt_secret.expiration)
         .or_else(|_| unauthorized("unauthorized!"))?;
 
-    format::json(LoginResponse::new(&user, &token))
+    // Use secure cookies only in production
+    let is_development = ctx.environment == environment::Environment::Development;
+
+    let jwt_cookie = Cookie::build(("jwt", token.clone()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(true);
+
+    let username_cookie = Cookie::build(("username", user.name.clone()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(false);
+
+    Ok((
+        jar.add(jwt_cookie).add(username_cookie),
+        format::json(LoginResponse::new(&user, &token))?
+    ))
 }
 
 #[debug_handler]
