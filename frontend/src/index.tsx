@@ -17,6 +17,20 @@ function DiscussionBoardPage() {
   return <KBoard uiState={uiState} />;
 }
 
+function ThreadViewerPage() {
+  const { boardId, threadId } = useParams<{ boardId: string; threadId: string }>();
+  const boardIdNum = Number(boardId) || 0;
+  const threadIdNum = Number(threadId) || 0;
+
+  const uiState: UIState = {
+    type: "thread_viewer",
+    boardId: boardIdNum,
+    threadId: threadIdNum
+  };
+
+  return <KBoard uiState={uiState} />;
+}
+
 const root = document.getElementById("root");
 
 if (!root) {
@@ -31,6 +45,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/register" element={<KBoard uiState={{ type: "register" }} />} />
           <Route path="/boards" element={<KBoard uiState={{ type: "board" }} />} />
           <Route path="/boards/:boardId/threads" element={<DiscussionBoardPage />} />
+          <Route path="/boards/:boardId/threads/:threadId" element={<ThreadViewerPage />} />
           <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
           <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
           <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />

@@ -20,6 +20,14 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
+        belongs_to = "Entity",
+        from = "Column::ReplyTo",
+        to = "Column::Id",
+        on_update = "NoAction",
+        on_delete = "SetNull"
+    )]
+    SelfRef,
+    #[sea_orm(
         belongs_to = "super::threads::Entity",
         from = "Column::ThreadId",
         to = "super::threads::Column::Id",

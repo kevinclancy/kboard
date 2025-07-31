@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import { RegisterForm } from "./RegisterForm";
 import { BoardSelector } from "./BoardSelector";
 import { DiscussionBoard } from "./DiscussionBoard";
+import { ThreadViewer } from "./ThreadViewer";
 import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
@@ -20,6 +21,8 @@ export type UIState =
   | { type: "board" }
   // Specific discussion board is displayed
   | { type: "discussion_board"; boardId: number }
+  // Specific thread viewer is displayed
+  | { type: "thread_viewer"; boardId: number; threadId: number }
   // Registration form is displayed
   | { type: "register" }
   // Login form is displayed
@@ -51,6 +54,8 @@ export function KBoard({ uiState }: KBoardProps) {
         return <BoardSelector />;
       case "discussion_board":
         return <DiscussionBoard boardId={uiState.boardId} />;
+      case "thread_viewer":
+        return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} />;
       case "register":
         return <RegisterForm />;
       case "login":

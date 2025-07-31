@@ -1,6 +1,8 @@
-import { Box, Text, VStack, Spinner, Grid, GridItem, IconButton } from "@chakra-ui/react";
+import { Box, Text, VStack, Spinner, Grid, GridItem, IconButton, Button } from "@chakra-ui/react";
 import { Pagination } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ReplyEditor } from "./ReplyEditor";
 import { API_ROOT } from "./config";
 
 /**
@@ -16,6 +18,7 @@ interface Thread {
   poster: number;
   poster_username: string;
   last_active: string;
+  num_replies: number;
   created_at: string;
   updated_at: string;
 }
@@ -40,6 +43,7 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
   const [pageSize, setPageSize] = useState(25);
   const [pageNumber, setPageNumber] = useState(0);
   const [totalThreads, setTotalThreads] = useState(0);
+  const [showNewThreadEditor, setShowNewThreadEditor] = useState(false);
 
   useEffect(() => {
     const fetchThreads = async () => {
@@ -130,9 +134,28 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
   return (
     <Box p={4}>
       {board && (
-        <Text fontSize="2xl" fontWeight="bold" mb={4} textAlign="left">
-          {board.title}
-        </Text>
+        <Box mb={4}>
+          <Text fontSize="2xl" fontWeight="bold" mb={2} textAlign="left">
+            {board.title}
+          </Text>
+          <Button
+            onClick={() => setShowNewThreadEditor(!showNewThreadEditor)}
+            colorScheme="blue"
+            size="md"
+          >
+            {showNewThreadEditor ? "Cancel" : "New Thread"}
+          </Button>
+        </Box>
+      )}
+
+      {/* New Thread Editor */}
+      {showNewThreadEditor && (
+        <Box mb={6}>
+          <ReplyEditor 
+            replyMode={{ type: "new_thread", boardId: boardId }}
+            onPostSucceeded={() => setShowNewThreadEditor(false)}
+          />
+        </Box>
       )}
 
       <VStack align="stretch" gap={2}>
@@ -166,7 +189,11 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
                 _hover={{ bg: "gray.100" }}
               >
                 <GridItem>
-                  <Text fontWeight="semibold">{thread.title}</Text>
+                  <Link to={`/boards/${boardId}/threads/${thread.id}`}>
+                    <Text fontWeight="semibold" color="blue.600" _hover={{ color: "blue.800" }}>
+                      {thread.title}
+                    </Text>
+                  </Link>
                 </GridItem>
                 <GridItem>
                   <Text color="gray.600">{formatDate(thread.last_active)}</Text>
