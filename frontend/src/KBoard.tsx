@@ -10,7 +10,7 @@ import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
 
-type AuthState =
+export type AuthState =
   // User is not authenticated
   | { type: "logged_out" }
   // User is authenticated with token and username
@@ -48,14 +48,20 @@ export function KBoard({ uiState }: KBoardProps) {
     setAuthState({ type: "logged_in", username });
   };
 
+  const handleAuthenticationError = () => {
+    Cookies.remove('username');
+    Cookies.remove('jwt');
+    setAuthState({ type: "logged_out" });
+  };
+
   const mainContent = (() => {
     switch (uiState.type) {
       case "board":
         return <BoardSelector />;
       case "discussion_board":
-        return <DiscussionBoard boardId={uiState.boardId} />;
+        return <DiscussionBoard boardId={uiState.boardId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
       case "thread_viewer":
-        return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} />;
+        return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
       case "register":
         return <RegisterForm />;
       case "login":

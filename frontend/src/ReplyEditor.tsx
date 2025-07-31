@@ -1,6 +1,5 @@
 import { Box, Text, VStack, Input, Textarea, Button } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { ThreadViewer } from "./ThreadViewer";
 import { API_ROOT } from "./config";
 
 type ReplyMode =
@@ -10,6 +9,7 @@ type ReplyMode =
 interface ReplyEditorProps {
   replyMode: ReplyMode;
   onPostSucceeded: () => void;
+  onAuthenticationError: () => void;
 }
 
 interface Reply {
@@ -22,7 +22,7 @@ interface Reply {
   created_at: string;
 }
 
-export function ReplyEditor({ replyMode, onPostSucceeded }: ReplyEditorProps) {
+export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError }: ReplyEditorProps) {
   const [title, setTitle] = useState("");
   const [replyText, setReplyText] = useState("");
   const [replyToData, setReplyToData] = useState<Reply | null>(null);
@@ -97,15 +97,37 @@ export function ReplyEditor({ replyMode, onPostSucceeded }: ReplyEditorProps) {
           setTitle("");
           setReplyText("");
           onPostSucceeded();
+        } else if (response.status === 401 || response.status === 403) {
+          onAuthenticationError();
+          setError("Authentication error. Please log in or register to create threads.");
         } else {
           setError("Failed to create thread");
         }
       } else {
         // Create reply to existing thread
-        // TODO: Implement reply creation endpoint
-        console.log("Would create reply to thread:", replyMode.threadId);
-        setReplyText("");
-        onPostSucceeded();
+        const response = await fetch(`${API_ROOT}/boards/${replyMode.boardId}/threads/${replyMode.threadId}/replies`, {
+          method: "POST",
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            body: replyText,
+            reply_to: replyMode.replyTo || null,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Reply created with ID:", data.reply_id);
+          setReplyText("");
+          onPostSucceeded();
+        } else if (response.status === 401 || response.status === 403) {
+          onAuthenticationError();
+          setError("Authentication error. Please log in or register to reply to threads.");
+        } else {
+          setError("Failed to create reply");
+        }
       }
     } catch (err) {
       console.error("Submit error:", err);
@@ -184,15 +206,6 @@ export function ReplyEditor({ replyMode, onPostSucceeded }: ReplyEditorProps) {
           </Text>
         )}
 
-        {/* Thread viewer for existing threads */}
-        {replyMode.type === "existing_thread" && (
-          <Box mt={6}>
-            <ThreadViewer
-              boardId={replyMode.boardId}
-              threadId={replyMode.threadId}
-            />
-          </Box>
-        )}
       </VStack>
     </Box>
   );

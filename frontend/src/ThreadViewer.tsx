@@ -1,7 +1,10 @@
-import { Box, Text, VStack, Spinner, HStack, IconButton } from "@chakra-ui/react";
+import { Box, Text, VStack, Spinner, HStack, IconButton, Breadcrumb, Button } from "@chakra-ui/react";
 import { Pagination } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { ReplyEditor } from "./ReplyEditor";
 import { API_ROOT } from "./config";
+import { AuthState } from "./KBoard";
 
 interface Reply {
   id: number;
@@ -16,9 +19,11 @@ interface Reply {
 interface ThreadViewerProps {
   boardId: number;
   threadId: number;
+  authState: AuthState;
+  onAuthenticationError: () => void;
 }
 
-export function ThreadViewer({ boardId, threadId }: ThreadViewerProps) {
+export function ThreadViewer({ boardId, threadId, authState, onAuthenticationError }: ThreadViewerProps) {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,41 +31,54 @@ export function ThreadViewer({ boardId, threadId }: ThreadViewerProps) {
   const [pageNumber, setPageNumber] = useState(0);
   const [totalReplies, setTotalReplies] = useState(0);
   const [threadTitle, setThreadTitle] = useState<string>("");
+  const [boardName, setBoardName] = useState<string>("");
+  const [showReplyEditor, setShowReplyEditor] = useState(false);
+
+  const fetchReplies = async () => {
+    try {
+      setLoading(true);
+      const url = `${API_ROOT}/boards/${boardId}/threads/${threadId}/replies?page_size=${pageSize}&page_number=${pageNumber}`;
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setReplies(data.replies || []);
+        setTotalReplies(data.total_count || 0);
+        setThreadTitle(data.thread_title || "");
+        setBoardName(data.board_name || "");
+      } else {
+        setError('Failed to fetch replies');
+      }
+    } catch (err) {
+      console.log(err);
+      setError('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchReplies = async () => {
-      try {
-        setLoading(true);
-        const url = `${API_ROOT}/boards/${boardId}/threads/${threadId}/replies?page_size=${pageSize}&page_number=${pageNumber}`;
-        const response = await fetch(url, {
-          method: "GET",
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setReplies(data.replies || []);
-          setTotalReplies(data.total_count || 0);
-          setThreadTitle(data.thread_title || "");
-        } else {
-          setError('Failed to fetch replies');
-        }
-      } catch (err) {
-        console.log(err);
-        setError('Network error. Please check your connection.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchReplies();
   }, [boardId, threadId, pageSize, pageNumber]);
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+      timeZone: 'UTC',
+      timeZoneName: 'short'
+    });
   };
 
   const handlePageChange = (page: number) => {
@@ -88,10 +106,57 @@ export function ThreadViewer({ boardId, threadId }: ThreadViewerProps) {
 
   return (
     <Box p={4}>
-      {threadTitle && (
-        <Text fontSize="2xl" fontWeight="bold" mb={4} textAlign="left">
-          {threadTitle}
-        </Text>
+      {boardName && threadTitle && (
+        <Breadcrumb.Root mb={4} fontSize="xl">
+          <Breadcrumb.List>
+            <Breadcrumb.Item>
+              <Link to={`/boards/${boardId}/threads`} style={{ textDecoration: 'none' }}>
+                <Breadcrumb.Link fontSize="xl" fontWeight="semibold">
+                  {boardName}
+                </Breadcrumb.Link>
+              </Link>
+            </Breadcrumb.Item>
+            <Breadcrumb.Separator />
+            <Breadcrumb.Item>
+              <Breadcrumb.CurrentLink fontSize="xl" fontWeight="bold">
+                {threadTitle}
+              </Breadcrumb.CurrentLink>
+            </Breadcrumb.Item>
+          </Breadcrumb.List>
+        </Breadcrumb.Root>
+      )}
+
+      {/* New Reply Button */}
+      {boardName && threadTitle && (
+        <Button
+          onClick={() => {
+            if (authState.type === "logged_out") {
+              setError("You must be logged in to reply to this thread. Please log in or register first.");
+            } else {
+              setShowReplyEditor(!showReplyEditor);
+              setError(null);
+            }
+          }}
+          colorScheme="blue"
+          size="md"
+          mb={4}
+        >
+          {showReplyEditor ? "Cancel Reply" : "New Reply"}
+        </Button>
+      )}
+
+      {/* Reply Editor */}
+      {showReplyEditor && (
+        <Box mb={6}>
+          <ReplyEditor 
+            replyMode={{ type: "existing_thread", boardId: boardId, threadId: threadId }}
+            onPostSucceeded={() => {
+              setShowReplyEditor(false);
+              fetchReplies();
+            }}
+            onAuthenticationError={onAuthenticationError}
+          />
+        </Box>
       )}
       
       <VStack align="stretch" gap={4}>

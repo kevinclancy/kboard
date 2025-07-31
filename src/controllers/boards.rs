@@ -1,4 +1,4 @@
-use crate::models::{boards::Model as Board, threads::Entity as ThreadEntity, threads::ThreadWithPosterName, threads::Model as Thread, replies::Entity as ReplyEntity};
+use crate::models::{boards::Model as Board, threads::Entity as ThreadEntity, threads::ThreadWithPosterName, threads::Model as Thread, replies::Entity as ReplyEntity, replies::Model as Reply};
 use axum::{debug_handler, extract::Path, extract::Query, Json};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ struct RepliesResponse {
     replies: Vec<crate::models::replies::ReplyResponse>,
     total_count: u64,
     thread_title: String,
+    board_name: String,
 }
 
 #[derive(Deserialize)]
@@ -31,6 +32,17 @@ struct CreateThreadRequest {
 #[derive(Serialize)]
 struct CreateThreadResponse {
     thread_id: i32,
+}
+
+#[derive(Deserialize)]
+struct CreateReplyRequest {
+    body: String,
+    reply_to: Option<i32>,
+}
+
+#[derive(Serialize)]
+struct CreateReplyResponse {
+    reply_id: i32,
 }
 
 #[derive(Serialize)]
@@ -85,10 +97,17 @@ async fn get_replies(
         .await?
         .ok_or_else(|| loco_rs::Error::NotFound)?;
 
+    // Get the board to fetch the board name
+    let board = crate::models::boards::Entity::find_by_id(board_id)
+        .one(&ctx.db)
+        .await?
+        .ok_or_else(|| loco_rs::Error::NotFound)?;
+
     let response = RepliesResponse {
         replies,
         total_count: thread.num_replies as u64,
         thread_title: thread.title,
+        board_name: board.title,
     };
 
     format::json(response)
@@ -119,6 +138,31 @@ async fn create_thread(
     format::json(response)
 }
 
+/// Create a new reply in a thread
+#[debug_handler]
+async fn create_reply(
+    auth: auth::JWT,
+    Path((_board_id, thread_id)): Path<(i32, i32)>,
+    State(ctx): State<AppContext>,
+    Json(req): Json<CreateReplyRequest>,
+) -> Result<Response> {
+    let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+
+    let reply = Reply::create(
+        &ctx.db,
+        req.body,
+        thread_id,
+        user.id,
+        req.reply_to,
+    ).await?;
+
+    let response = CreateReplyResponse {
+        reply_id: reply.id,
+    };
+
+    format::json(response)
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api/boards/")
@@ -126,4 +170,5 @@ pub fn routes() -> Routes {
         .add("/{id}/threads", get(get_threads))
         .add("/{id}/threads", post(create_thread))
         .add("/{board_id}/threads/{thread_id}/replies", get(get_replies))
+        .add("/{board_id}/threads/{thread_id}/replies", post(create_reply))
 }

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ReplyEditor } from "./ReplyEditor";
 import { API_ROOT } from "./config";
+import { AuthState } from "./KBoard";
 
 /**
  * DiscussionBoard component represents many threads discussing a specific named topic.
@@ -33,9 +34,11 @@ interface Board {
 
 interface DiscussionBoardProps {
   boardId: number;
+  authState: AuthState;
+  onAuthenticationError: () => void;
 }
 
-export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
+export function DiscussionBoard({ boardId, authState, onAuthenticationError }: DiscussionBoardProps) {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,34 +48,34 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
   const [totalThreads, setTotalThreads] = useState(0);
   const [showNewThreadEditor, setShowNewThreadEditor] = useState(false);
 
-  useEffect(() => {
-    const fetchThreads = async () => {
-      try {
-        setLoading(true);
-        const url = `${API_ROOT}/boards/${boardId}/threads?page_size=${pageSize}&page_number=${pageNumber}`;
-        const response = await fetch(url, {
-          method: "GET",
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+  const fetchThreads = async () => {
+    try {
+      setLoading(true);
+      const url = `${API_ROOT}/boards/${boardId}/threads?page_size=${pageSize}&page_number=${pageNumber}`;
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          setThreads(data.threads || []);
-          setTotalThreads(data.total_count || 0);
-        } else {
-          setError('Failed to fetch threads');
-        }
-      } catch (err) {
-        console.log(err);
-        setError('Network error. Please check your connection.');
-      } finally {
-        setLoading(false);
+      if (response.ok) {
+        const data = await response.json();
+        setThreads(data.threads || []);
+        setTotalThreads(data.total_count || 0);
+      } else {
+        setError('Failed to fetch threads');
       }
-    };
+    } catch (err) {
+      console.log(err);
+      setError('Network error. Please check your connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchThreads();
   }, [boardId, pageSize, pageNumber]);
 
@@ -139,7 +142,14 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
             {board.title}
           </Text>
           <Button
-            onClick={() => setShowNewThreadEditor(!showNewThreadEditor)}
+            onClick={() => {
+              if (authState.type === "logged_out") {
+                setError("You must be logged in to create a thread. Please log in or register first.");
+              } else {
+                setShowNewThreadEditor(!showNewThreadEditor);
+                setError(null);
+              }
+            }}
             colorScheme="blue"
             size="md"
           >
@@ -153,7 +163,11 @@ export function DiscussionBoard({ boardId }: DiscussionBoardProps) {
         <Box mb={6}>
           <ReplyEditor 
             replyMode={{ type: "new_thread", boardId: boardId }}
-            onPostSucceeded={() => setShowNewThreadEditor(false)}
+            onPostSucceeded={() => {
+              setShowNewThreadEditor(false);
+              fetchThreads();
+            }}
+            onAuthenticationError={onAuthenticationError}
           />
         </Box>
       )}

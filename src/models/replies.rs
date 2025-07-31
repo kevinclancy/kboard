@@ -34,7 +34,41 @@ impl ActiveModelBehavior for ActiveModel {
 }
 
 // implement your read-oriented logic here
-impl Model {}
+impl Model {
+    pub async fn create(
+        db: &DatabaseConnection,
+        body: String,
+        thread_id: i32,
+        poster: i32,
+        reply_to: Option<i32>,
+    ) -> Result<Self, DbErr> {
+        let reply = ActiveModel {
+            body: sea_orm::ActiveValue::Set(body),
+            thread_id: sea_orm::ActiveValue::Set(thread_id),
+            poster: sea_orm::ActiveValue::Set(poster),
+            reply_to: sea_orm::ActiveValue::Set(reply_to),
+            ..Default::default()
+        };
+
+        let result = reply.insert(db).await?;
+        
+        // Update thread num_replies count
+        use crate::models::threads::{Entity as ThreadEntity, Column as ThreadColumn};
+        use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, Set};
+        
+        let thread = ThreadEntity::find()
+            .filter(ThreadColumn::Id.eq(thread_id))
+            .one(db)
+            .await?
+            .ok_or_else(|| DbErr::RecordNotFound("Thread not found".to_string()))?;
+            
+        let mut thread_active: crate::models::threads::ActiveModel = thread.into();
+        thread_active.num_replies = Set(thread_active.num_replies.unwrap() + 1);
+        thread_active.update(db).await?;
+        
+        Ok(result)
+    }
+}
 
 // implement your write-oriented logic here
 impl ActiveModel {}
@@ -57,7 +91,7 @@ impl Entity {
                 crate::models::_entities::replies::Relation::SelfRef.def(),
                 "parent_reply"
             )
-            .order_by_desc(Column::Id)
+            .order_by_asc(Column::Id)
             .offset(page_size * page_number)
             .limit(page_size)
             .select_only()
