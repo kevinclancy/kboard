@@ -13,7 +13,7 @@ interface Reply {
   thread_id: number;
   poster: number;
   poster_username: string;
-  created_at: string;
+  updated_at: string;
 }
 
 interface ThreadViewerProps {
@@ -33,6 +33,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
   const [threadTitle, setThreadTitle] = useState<string>("");
   const [boardName, setBoardName] = useState<string>("");
   const [showReplyEditor, setShowReplyEditor] = useState(false);
+  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
 
   const fetchReplies = async () => {
     try {
@@ -155,6 +156,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
               fetchReplies();
             }}
             onAuthenticationError={onAuthenticationError}
+            onCancel={() => setShowReplyEditor(false)}
           />
         </Box>
       )}
@@ -187,10 +189,22 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
                 {/* Right side - Posted date, reply-to, and body */}
                 <VStack align="stretch" flex={1} gap={2}>
-                  {/* Posted at date */}
-                  <Text fontSize="sm" color="gray.600">
-                    Posted at {formatDate(reply.created_at)}
-                  </Text>
+                  {/* Posted at date with edit button */}
+                  <HStack justifyContent="space-between" alignItems="center">
+                    <Text fontSize="sm" color="gray.600">
+                      Last updated {formatDate(reply.updated_at)}
+                    </Text>
+                    {authState.type === "logged_in" && authState.username === reply.poster_username && (
+                      <Button 
+                        size="xs" 
+                        variant="outline" 
+                        colorScheme="blue"
+                        onClick={() => setEditingReplyId(reply.id)}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                  </HStack>
 
                   {/* Reply-to quotation box (if exists) */}
                   {reply.reply_to && (
@@ -210,7 +224,25 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
                   {/* Reply body */}
                   <Box>
-                    <Text>{reply.body}</Text>
+                    {editingReplyId === reply.id ? (
+                      <ReplyEditor 
+                        replyMode={{ 
+                          type: "edit_reply", 
+                          boardId: boardId, 
+                          threadId: threadId, 
+                          replyId: reply.id, 
+                          currentText: reply.body 
+                        }}
+                        onPostSucceeded={() => {
+                          setEditingReplyId(null);
+                          fetchReplies();
+                        }}
+                        onAuthenticationError={onAuthenticationError}
+                        onCancel={() => setEditingReplyId(null)}
+                      />
+                    ) : (
+                      <Text whiteSpace="pre-wrap">{reply.body}</Text>
+                    )}
                   </Box>
                 </VStack>
               </HStack>

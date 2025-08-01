@@ -14,7 +14,7 @@ pub struct ReplyResponse {
     pub thread_id: i32,
     pub poster: i32,
     pub poster_username: String,
-    pub created_at: DateTimeWithTimeZone,
+    pub updated_at: DateTimeWithTimeZone,
 }
 
 #[async_trait::async_trait]
@@ -101,7 +101,7 @@ impl Entity {
                 Column::ReplyTo,
                 Column::ThreadId,
                 Column::Poster,
-                Column::CreatedAt,
+                Column::UpdatedAt,
             ])
             .column_as(users::users::Column::Name, "poster_username")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::Body)), "parent_body")
@@ -111,7 +111,7 @@ impl Entity {
 
         let result = replies_with_data
             .into_iter()
-            .map(|(id, body, reply_to_id, thread_id, poster, created_at, poster_username, parent_body)| {
+            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, poster_username, parent_body)| {
                 let reply_to = match (reply_to_id, parent_body) {
                     (Some(id), Some(text)) => Some((id, text)),
                     (None, None) => None,
@@ -125,7 +125,7 @@ impl Entity {
                     thread_id,
                     poster,
                     poster_username,
-                    created_at,
+                    updated_at,
                 }
             })
             .collect();

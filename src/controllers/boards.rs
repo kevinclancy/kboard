@@ -45,6 +45,11 @@ struct CreateReplyResponse {
     reply_id: i32,
 }
 
+#[derive(Deserialize)]
+struct UpdateReplyRequest {
+    body: String,
+}
+
 #[derive(Serialize)]
 struct ThreadsResponse {
     threads: Vec<ThreadWithPosterName>,
@@ -163,6 +168,36 @@ async fn create_reply(
     format::json(response)
 }
 
+/// Update an existing reply
+#[debug_handler]
+async fn update_reply(
+    auth: auth::JWT,
+    Path((_board_id, _thread_id, reply_id)): Path<(i32, i32, i32)>,
+    State(ctx): State<AppContext>,
+    Json(req): Json<UpdateReplyRequest>,
+) -> Result<Response> {
+    let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+
+    // First, find the reply and verify ownership
+    let reply = ReplyEntity::find_by_id(reply_id)
+        .one(&ctx.db)
+        .await?
+        .ok_or_else(|| loco_rs::Error::NotFound)?;
+    
+    // Check if the user owns this reply
+    if reply.poster != user.id {
+        return Err(loco_rs::Error::Unauthorized("You can only edit your own replies".to_string()));
+    }
+
+    // Update the reply
+    use sea_orm::{ActiveModelTrait, Set};
+    let mut active_reply: crate::models::replies::ActiveModel = reply.into();
+    active_reply.body = Set(req.body);
+    active_reply.update(&ctx.db).await?;
+
+    format::json(serde_json::json!({"success": true}))
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api/boards/")
@@ -171,4 +206,5 @@ pub fn routes() -> Routes {
         .add("/{id}/threads", post(create_thread))
         .add("/{board_id}/threads/{thread_id}/replies", get(get_replies))
         .add("/{board_id}/threads/{thread_id}/replies", post(create_reply))
+        .add("/{board_id}/threads/{thread_id}/replies/{reply_id}", patch(update_reply))
 }

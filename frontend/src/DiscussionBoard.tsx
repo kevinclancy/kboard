@@ -168,6 +168,7 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
               fetchThreads();
             }}
             onAuthenticationError={onAuthenticationError}
+            onCancel={() => setShowNewThreadEditor(false)}
           />
         </Box>
       )}
