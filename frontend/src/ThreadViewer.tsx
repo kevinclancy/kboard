@@ -188,6 +188,13 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
               borderRadius="md"
               bg="white"
               boxShadow="sm"
+              _target={{
+                bg: "yellow.100",
+                borderColor: "yellow.400",
+                borderWidth: 2,
+                boxShadow: "md"
+              }}
+              transition="all 0.3s ease"
             >
               <HStack align="start" gap={4} w="full">
                 {/* Left side - Username */}
