@@ -17,6 +17,7 @@ pub struct Model {
     pub poster: i32,
     pub last_active: DateTime,
     pub num_replies: i32,
+    pub is_deleted: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

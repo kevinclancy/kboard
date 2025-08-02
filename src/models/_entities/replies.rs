@@ -15,6 +15,7 @@ pub struct Model {
     pub reply_to: Option<i32>,
     pub thread_id: i32,
     pub poster: i32,
+    pub is_deleted: bool,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
