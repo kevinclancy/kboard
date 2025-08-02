@@ -11,6 +11,7 @@ mod m20250724_040020_create_thread_board_active_index;
 mod m20250727_043400_add_num_threads_to_boards;
 mod m20250727_044844_add_num_replies_to_threads;
 mod m20250801_155826_add_replies_thread_index;
+mod m20250802_225354_add_is_moderator_and_is_banned_to_users;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -26,6 +27,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250727_043400_add_num_threads_to_boards::Migration),
             Box::new(m20250727_044844_add_num_replies_to_threads::Migration),
             Box::new(m20250801_155826_add_replies_thread_index::Migration),
+            Box::new(m20250802_225354_add_is_moderator_and_is_banned_to_users::Migration),
             // inject-above (do not remove this comment)
         ]
     }
