@@ -9,12 +9,18 @@ import { AuthState } from "./KBoard";
 interface Reply {
   id: number;
   body: string;
+  /// Tuple containing [reply_id, reply_body_text] - the ID and text of the reply being responded to
   reply_to: [number, string] | null;
   thread_id: number;
   poster: number;
   poster_username: string;
   updated_at: string;
 }
+
+type ReplyEditorState =
+  | { type: "closed" }
+  | { type: "new_reply"; replyToId?: number }
+  | { type: "editing_reply"; replyId: number };
 
 interface ThreadViewerProps {
   boardId: number;
@@ -32,8 +38,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
   const [totalReplies, setTotalReplies] = useState(0);
   const [threadTitle, setThreadTitle] = useState<string>("");
   const [boardName, setBoardName] = useState<string>("");
-  const [showReplyEditor, setShowReplyEditor] = useState(false);
-  const [editingReplyId, setEditingReplyId] = useState<number | null>(null);
+  const [replyEditorState, setReplyEditorState] = useState<ReplyEditorState>({ type: "closed" });
 
   const fetchReplies = async () => {
     try {
@@ -134,7 +139,11 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
             if (authState.type === "logged_out") {
               setError("You must be logged in to reply to this thread. Please log in or register first.");
             } else {
-              setShowReplyEditor(!showReplyEditor);
+              setReplyEditorState(
+                replyEditorState.type === "new_reply" 
+                  ? { type: "closed" }
+                  : { type: "new_reply" }
+              );
               setError(null);
             }
           }}
@@ -142,21 +151,26 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
           size="md"
           mb={4}
         >
-          {showReplyEditor ? "Cancel Reply" : "New Reply"}
+          {replyEditorState.type === "new_reply" ? "Cancel Reply" : "New Reply"}
         </Button>
       )}
 
       {/* Reply Editor */}
-      {showReplyEditor && (
+      {replyEditorState.type === "new_reply" && (
         <Box mb={6}>
           <ReplyEditor 
-            replyMode={{ type: "existing_thread", boardId: boardId, threadId: threadId }}
+            replyMode={{ 
+              type: "existing_thread", 
+              boardId: boardId, 
+              threadId: threadId,
+              replyTo: replyEditorState.replyToId
+            }}
             onPostSucceeded={() => {
-              setShowReplyEditor(false);
+              setReplyEditorState({ type: "closed" });
               fetchReplies();
             }}
             onAuthenticationError={onAuthenticationError}
-            onCancel={() => setShowReplyEditor(false)}
+            onCancel={() => setReplyEditorState({ type: "closed" })}
           />
         </Box>
       )}
@@ -168,6 +182,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
           replies.map((reply) => (
             <Box
               key={reply.id}
+              id={`reply-${reply.id}`}
               p={4}
               borderWidth={1}
               borderRadius="md"
@@ -189,21 +204,39 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
                 {/* Right side - Posted date, reply-to, and body */}
                 <VStack align="stretch" flex={1} gap={2}>
-                  {/* Posted at date with edit button */}
+                  {/* Posted at date with edit and reply buttons */}
                   <HStack justifyContent="space-between" alignItems="center">
                     <Text fontSize="sm" color="gray.600">
                       Last updated {formatDate(reply.updated_at)}
                     </Text>
-                    {authState.type === "logged_in" && authState.username === reply.poster_username && (
-                      <Button 
-                        size="xs" 
-                        variant="outline" 
-                        colorScheme="blue"
-                        onClick={() => setEditingReplyId(reply.id)}
-                      >
-                        Edit
-                      </Button>
-                    )}
+                    <HStack gap={2}>
+                      {authState.type === "logged_in" && (
+                        <Button 
+                          size="xs" 
+                          variant="outline" 
+                          colorScheme="green"
+                          onClick={() => {
+                            if (replyEditorState.type === "new_reply" && replyEditorState.replyToId === reply.id) {
+                              setReplyEditorState({ type: "closed" });
+                            } else {
+                              setReplyEditorState({ type: "new_reply", replyToId: reply.id });
+                            }
+                          }}
+                        >
+                          Reply
+                        </Button>
+                      )}
+                      {authState.type === "logged_in" && authState.username === reply.poster_username && (
+                        <Button 
+                          size="xs" 
+                          variant="outline" 
+                          colorScheme="blue"
+                          onClick={() => setReplyEditorState({ type: "editing_reply", replyId: reply.id })}
+                        >
+                          Edit
+                        </Button>
+                      )}
+                    </HStack>
                   </HStack>
 
                   {/* Reply-to quotation box (if exists) */}
@@ -216,6 +249,16 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                       borderRadius="md"
                       fontStyle="italic"
                     >
+                      <Text fontSize="sm" mb={2}>
+                        <a 
+                          href={`#reply-${reply.reply_to[0]}`}
+                          style={{ color: "#2563eb", textDecoration: "underline" }}
+                          onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#1d4ed8"}
+                          onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#2563eb"}
+                        >
+                          Reply #{reply.reply_to[0]}
+                        </a>
+                      </Text>
                       <Text fontSize="sm" color="gray.700">
                         "{reply.reply_to[1]}"
                       </Text>
@@ -224,7 +267,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
                   {/* Reply body */}
                   <Box>
-                    {editingReplyId === reply.id ? (
+                    {replyEditorState.type === "editing_reply" && replyEditorState.replyId === reply.id ? (
                       <ReplyEditor 
                         replyMode={{ 
                           type: "edit_reply", 
@@ -234,11 +277,11 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                           currentText: reply.body 
                         }}
                         onPostSucceeded={() => {
-                          setEditingReplyId(null);
+                          setReplyEditorState({ type: "closed" });
                           fetchReplies();
                         }}
                         onAuthenticationError={onAuthenticationError}
-                        onCancel={() => setEditingReplyId(null)}
+                        onCancel={() => setReplyEditorState({ type: "closed" })}
                       />
                     ) : (
                       <Text whiteSpace="pre-wrap">{reply.body}</Text>

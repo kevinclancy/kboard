@@ -17,6 +17,7 @@ interface ReplyEditorProps {
 interface Reply {
   id: number;
   body: string;
+  /// [reply_id, reply_body_text] - the ID and text of the reply being responded to
   reply_to: [number, string] | null;
   thread_id: number;
   poster: number;
