@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ReplyEditor } from "./ReplyEditor";
 import { API_ROOT } from "./config";
 import { AuthState } from "./KBoard";
+import Cookies from "js-cookie";
 
 interface Reply {
   id: number;
@@ -15,6 +16,7 @@ interface Reply {
   poster: number;
   poster_username: string;
   updated_at: string;
+  is_deleted: boolean;
 }
 
 type ReplyEditorState =
@@ -39,6 +41,8 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
   const [threadTitle, setThreadTitle] = useState<string>("");
   const [boardName, setBoardName] = useState<string>("");
   const [replyEditorState, setReplyEditorState] = useState<ReplyEditorState>({ type: "closed" });
+
+  const isCurrentUserModerator = Cookies.get("is_moderator") === "true";
 
   const fetchReplies = async () => {
     try {
@@ -89,6 +93,30 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
   const handlePageChange = (page: number) => {
     setPageNumber(page - 1); // Chakra UI uses 1-based indexing, our API uses 0-based
+  };
+
+  const handleDeleteReply = async (replyId: number) => {
+    try {
+      const response = await fetch(`${API_ROOT}/boards/${boardId}/threads/${threadId}/replies/${replyId}`, {
+        method: "DELETE",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        fetchReplies(); // Refresh the replies list
+      } else if (response.status === 401 || response.status === 403) {
+        onAuthenticationError();
+        setError("Authentication error. Please log in to delete replies.");
+      } else {
+        setError("Failed to delete reply");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      setError("Network error. Please check your connection.");
+    }
   };
 
   const totalPages = Math.ceil(totalReplies / pageSize);
@@ -217,7 +245,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                       Last updated {formatDate(reply.updated_at)}
                     </Text>
                     <HStack gap={2}>
-                      {authState.type === "logged_in" && (
+                      {authState.type === "logged_in" && !reply.is_deleted && (
                         <Button 
                           size="xs" 
                           variant="outline" 
@@ -233,7 +261,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                           Reply
                         </Button>
                       )}
-                      {authState.type === "logged_in" && authState.username === reply.poster_username && (
+                      {authState.type === "logged_in" && authState.username === reply.poster_username && !reply.is_deleted && (
                         <Button 
                           size="xs" 
                           variant="outline" 
@@ -241,6 +269,20 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                           onClick={() => setReplyEditorState({ type: "editing_reply", replyId: reply.id })}
                         >
                           Edit
+                        </Button>
+                      )}
+                      {authState.type === "logged_in" && (authState.username === reply.poster_username || isCurrentUserModerator) && !reply.is_deleted && (
+                        <Button 
+                          size="xs" 
+                          variant="outline" 
+                          colorScheme="red"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this reply?")) {
+                              handleDeleteReply(reply.id);
+                            }
+                          }}
+                        >
+                          Delete
                         </Button>
                       )}
                     </HStack>
@@ -274,7 +316,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
 
                   {/* Reply body */}
                   <Box>
-                    {replyEditorState.type === "editing_reply" && replyEditorState.replyId === reply.id ? (
+                    {replyEditorState.type === "editing_reply" && replyEditorState.replyId === reply.id && !reply.is_deleted ? (
                       <ReplyEditor 
                         replyMode={{ 
                           type: "edit_reply", 
@@ -291,7 +333,9 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                         onCancel={() => setReplyEditorState({ type: "closed" })}
                       />
                     ) : (
-                      <Text whiteSpace="pre-wrap">{reply.body}</Text>
+                      <Text whiteSpace="pre-wrap" color={reply.is_deleted ? "gray.500" : "inherit"} fontStyle={reply.is_deleted ? "italic" : "normal"}>
+                        {reply.is_deleted ? "This reply has been deleted" : reply.body}
+                      </Text>
                     )}
                   </Box>
                 </VStack>

@@ -179,8 +179,15 @@ async fn login(
         .path("/")
         .http_only(false);
 
+    let is_moderator_cookie = Cookie::build(("is_moderator", user.is_moderator.to_string()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(false);
+
     Ok((
-        jar.add(jwt_cookie).add(username_cookie),
+        jar.add(jwt_cookie).add(username_cookie).add(is_moderator_cookie),
         format::json(LoginResponse::new(&user, &token))?
     ))
 }

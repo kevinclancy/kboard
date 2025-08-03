@@ -15,6 +15,7 @@ pub struct ReplyResponse {
     pub poster: i32,
     pub poster_username: String,
     pub updated_at: DateTimeWithTimeZone,
+    pub is_deleted: bool,
 }
 
 #[async_trait::async_trait]
@@ -102,16 +103,17 @@ impl Entity {
                 Column::ThreadId,
                 Column::Poster,
                 Column::UpdatedAt,
+                Column::IsDeleted,
             ])
             .column_as(users::users::Column::Name, "poster_username")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::Body)), "parent_body")
-            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, String, Option<String>)>()
+            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, bool, String, Option<String>)>()
             .all(db)
             .await?;
 
         let result = replies_with_data
             .into_iter()
-            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, poster_username, parent_body)| {
+            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, is_deleted, poster_username, parent_body)| {
                 let reply_to = match (reply_to_id, parent_body) {
                     (Some(id), Some(text)) => Some((id, text)),
                     (None, None) => None,
@@ -126,6 +128,7 @@ impl Entity {
                     poster,
                     poster_username,
                     updated_at,
+                    is_deleted,
                 }
             })
             .collect();

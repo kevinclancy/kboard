@@ -198,6 +198,35 @@ async fn update_reply(
     format::json(serde_json::json!({"success": true}))
 }
 
+/// Delete a reply (soft delete by setting is_deleted flag)
+#[debug_handler]
+async fn delete_reply(
+    auth: auth::JWT,
+    Path((_board_id, _thread_id, reply_id)): Path<(i32, i32, i32)>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
+    let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+
+    // First, find the reply
+    let reply = ReplyEntity::find_by_id(reply_id)
+        .one(&ctx.db)
+        .await?
+        .ok_or_else(|| loco_rs::Error::NotFound)?;
+    
+    // Check if the user owns this reply or is a moderator
+    if reply.poster != user.id && !user.is_moderator {
+        return Err(loco_rs::Error::Unauthorized("You can only delete your own replies or must be a moderator".to_string()));
+    }
+
+    // Soft delete the reply by setting is_deleted to true
+    use sea_orm::{ActiveModelTrait, Set};
+    let mut active_reply: crate::models::replies::ActiveModel = reply.into();
+    active_reply.is_deleted = Set(true);
+    active_reply.update(&ctx.db).await?;
+
+    format::json(serde_json::json!({"success": true}))
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api/boards/")
@@ -207,4 +236,5 @@ pub fn routes() -> Routes {
         .add("/{board_id}/threads/{thread_id}/replies", get(get_replies))
         .add("/{board_id}/threads/{thread_id}/replies", post(create_reply))
         .add("/{board_id}/threads/{thread_id}/replies/{reply_id}", patch(update_reply))
+        .add("/{board_id}/threads/{thread_id}/replies/{reply_id}", delete(delete_reply))
 }
