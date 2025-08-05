@@ -1,13 +1,12 @@
 ;<html>
 
 <body>
-  Dear {{name}},
-  Welcome to Loco! You can now log in to your account.
-  Before you get started, please verify your account by clicking the link below:
-  <a href="{{domain}}/api/auth/verify/{{verifyToken}}">
-    Verify Your Account
-  </a>
-  <p>Best regards,<br>The Loco Team</p>
+  <p>Hey {{name}},</p>
+  <p>Welcome to the BrokenJaw.com message board! To verify your email and log in
+  for the first time, click the link below:</p>
+
+  <p><a href="http://{{domain}}/verify/{{verifyToken}}">Verify Your Account</a></p>
+  <p>Best regards,<br>Kevin</p>
 </body>
 
 </html>

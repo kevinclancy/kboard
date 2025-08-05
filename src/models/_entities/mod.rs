@@ -4,5 +4,6 @@ pub mod prelude;
 
 pub mod boards;
 pub mod replies;
+pub mod reply_statuses;
 pub mod threads;
 pub mod users;

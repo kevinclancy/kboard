@@ -78,20 +78,59 @@ async fn register(
 /// Verify register user. if the user not verified his email, he can't login to
 /// the system.
 #[debug_handler]
-async fn verify(State(ctx): State<AppContext>, Path(token): Path<String>) -> Result<Response> {
+async fn verify(
+    State(ctx): State<AppContext>, 
+    jar: CookieJar,
+    Path(token): Path<String>
+) -> Result<(CookieJar, Response)> {
     let Ok(user) = users::Model::find_by_verification_token(&ctx.db, &token).await else {
         return unauthorized("invalid token");
     };
 
-    if user.email_verified_at.is_some() {
+    let verified_user = if user.email_verified_at.is_some() {
         tracing::info!(pid = user.pid.to_string(), "user already verified");
+        user
     } else {
         let active_model = user.into_active_model();
-        let user = active_model.verified(&ctx.db).await?;
-        tracing::info!(pid = user.pid.to_string(), "user verified");
-    }
+        let verified_user = active_model.verified(&ctx.db).await?;
+        tracing::info!(pid = verified_user.pid.to_string(), "user verified");
+        verified_user
+    };
 
-    format::json(())
+    // Generate JWT and set cookies to log the user in
+    let jwt_secret = ctx.config.get_jwt_config()?;
+    let token = verified_user
+        .generate_jwt(&jwt_secret.secret, jwt_secret.expiration)
+        .or_else(|_| unauthorized("unauthorized!"))?;
+
+    // Use secure cookies only in production
+    let is_development = ctx.environment == environment::Environment::Development;
+
+    let jwt_cookie = Cookie::build(("jwt", token.clone()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(true);
+
+    let username_cookie = Cookie::build(("username", verified_user.name.clone()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(false);
+
+    let is_moderator_cookie = Cookie::build(("is_moderator", verified_user.is_moderator.to_string()))
+        .secure(!is_development)
+        .same_site(if is_development { SameSite::Lax } else { SameSite::Strict })
+        .max_age(Duration::days(7))
+        .path("/")
+        .http_only(false);
+
+    Ok((
+        jar.add(jwt_cookie).add(username_cookie).add(is_moderator_cookie),
+        format::json(LoginResponse::new(&verified_user, &token))?
+    ))
 }
 
 /// In case the user forgot his password  this endpoints generate a forgot token

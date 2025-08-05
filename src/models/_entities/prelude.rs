@@ -2,5 +2,6 @@
 
 pub use super::boards::Entity as Boards;
 pub use super::replies::Entity as Replies;
+pub use super::reply_statuses::Entity as ReplyStatuses;
 pub use super::threads::Entity as Threads;
 pub use super::users::Entity as Users;

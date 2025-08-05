@@ -16,7 +16,7 @@ impl MigrationTrait for Migration {
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
         let _ = m
             .get_connection()
-            .execute_unprepared("DROP INDEX replies_thread_index ON replies;")
+            .execute_unprepared("DROP INDEX replies_thread_index;")
             .await?;
         Ok(())
     }

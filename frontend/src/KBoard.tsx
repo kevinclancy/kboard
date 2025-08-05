@@ -9,6 +9,7 @@ import { ThreadViewer } from "./ThreadViewer";
 import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
+import { VerifyEmail } from "./VerifyEmail";
 
 export type AuthState =
   // User is not authenticated
@@ -30,7 +31,9 @@ export type UIState =
   // Reset password form is displayed
   | { type: "reset_password" }
   // New password with key is displayed
-  | { type: "new_password" };
+  | { type: "new_password" }
+  // Email verification is displayed
+  | { type: "verify_email"; verifyToken: string };
 
 interface KBoardProps {
   uiState: UIState;
@@ -71,6 +74,8 @@ export function KBoard({ uiState }: KBoardProps) {
       case "new_password":
         const resetKey = window.location.hash.substring(1);
         return <NewPasswordForm resetKey={resetKey} />;
+      case "verify_email":
+        return <VerifyEmail verifyToken={uiState.verifyToken} login={handleLogin} />;
     }
   })();
 

@@ -31,6 +31,26 @@ function ThreadViewerPage() {
   return <KBoard uiState={uiState} />;
 }
 
+function VerifyEmailPage() {
+  const { verifyToken } = useParams<{ verifyToken: string }>();
+
+  if (!verifyToken) {
+    return (
+      <div style={{ padding: '2rem', textAlign: 'center' }}>
+        <h1>Invalid Verification Link</h1>
+        <p>The verification link is missing required parameters. Please check the link and try again.</p>
+      </div>
+    );
+  }
+
+  const uiState: UIState = {
+    type: "verify_email",
+    verifyToken: verifyToken
+  };
+
+  return <KBoard uiState={uiState} />;
+}
+
 const root = document.getElementById("root");
 
 if (!root) {
@@ -49,6 +69,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
           <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
           <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />
+          <Route path="/verify/:verifyToken" element={<VerifyEmailPage />} />
           <Route path="*" element={<KBoard uiState={{ type: "board" }} />} />
         </Routes>
       </ChakraProvider>

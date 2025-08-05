@@ -14,6 +14,7 @@ mod m20250801_155826_add_replies_thread_index;
 mod m20250802_225354_add_is_moderator_and_is_banned_to_users;
 mod m20250802_230441_add_is_deleted_to_replies;
 mod m20250802_230712_add_is_deleted_to_threads;
+mod m20250804_210454_reply_statuses;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -32,6 +33,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250802_225354_add_is_moderator_and_is_banned_to_users::Migration),
             Box::new(m20250802_230441_add_is_deleted_to_replies::Migration),
             Box::new(m20250802_230712_add_is_deleted_to_threads::Migration),
+            Box::new(m20250804_210454_reply_statuses::Migration),
             // inject-above (do not remove this comment)
         ]
     }
