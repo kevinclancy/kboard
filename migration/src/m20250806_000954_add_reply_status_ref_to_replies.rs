@@ -7,12 +7,18 @@ pub struct Migration;
 #[async_trait::async_trait]
 impl MigrationTrait for Migration {
     async fn up(&self, m: &SchemaManager) -> Result<(), DbErr> {
-        add_column(m, "replies", "is_deleted", ColType::BooleanWithDefault(false)).await?;
+        // Insert the three reply status types
+        m.get_connection()
+            .execute_unprepared(
+                "ALTER TABLE replies ADD COLUMN reply_status INTEGER NOT NULL REFERENCES reply_statuses(id) DEFAULT 1;"
+            )
+            .await?;
+
         Ok(())
     }
 
     async fn down(&self, m: &SchemaManager) -> Result<(), DbErr> {
-        remove_column(m, "replies", "is_deleted").await?;
+        remove_column(m, "replies", "reply_status").await?;
         Ok(())
     }
 }
