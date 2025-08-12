@@ -15,7 +15,7 @@ pub struct Model {
     pub reply_to: Option<i32>,
     pub thread_id: i32,
     pub poster: i32,
-    pub is_deleted: bool,
+    pub reply_status: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -28,6 +28,14 @@ pub enum Relation {
         on_delete = "SetNull"
     )]
     SelfRef,
+    #[sea_orm(
+        belongs_to = "super::reply_statuses::Entity",
+        from = "Column::ReplyStatus",
+        to = "super::reply_statuses::Column::Id",
+        on_update = "NoAction",
+        on_delete = "NoAction"
+    )]
+    ReplyStatuses,
     #[sea_orm(
         belongs_to = "super::threads::Entity",
         from = "Column::ThreadId",
@@ -44,6 +52,12 @@ pub enum Relation {
         on_delete = "Cascade"
     )]
     Users,
+}
+
+impl Related<super::reply_statuses::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::ReplyStatuses.def()
+    }
 }
 
 impl Related<super::threads::Entity> for Entity {

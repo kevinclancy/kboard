@@ -9,13 +9,13 @@ pub type Replies = Entity;
 pub struct ReplyResponse {
     pub id: i32,
     pub body: String,
-    /// If this is a reply to another reply, contains (reply_id, reply_text)
-    pub reply_to: Option<(i32, String)>,
+    /// [reply_id, reply_text, reply_status] - ID, text, and status of the reply being responded to
+    pub reply_to: Option<(i32, String, i32)>,
     pub thread_id: i32,
     pub poster: i32,
     pub poster_username: String,
     pub updated_at: DateTimeWithTimeZone,
-    pub is_deleted: bool,
+    pub reply_status: i32,
 }
 
 #[async_trait::async_trait]
@@ -52,21 +52,21 @@ impl Model {
         };
 
         let result = reply.insert(db).await?;
-        
+
         // Update thread num_replies count
         use crate::models::threads::{Entity as ThreadEntity, Column as ThreadColumn};
         use sea_orm::{EntityTrait, ColumnTrait, QueryFilter, Set};
-        
+
         let thread = ThreadEntity::find()
             .filter(ThreadColumn::Id.eq(thread_id))
             .one(db)
             .await?
             .ok_or_else(|| DbErr::RecordNotFound("Thread not found".to_string()))?;
-            
+
         let mut thread_active: crate::models::threads::ActiveModel = thread.into();
         thread_active.num_replies = Set(thread_active.num_replies.unwrap() + 1);
         thread_active.update(db).await?;
-        
+
         Ok(result)
     }
 }
@@ -103,21 +103,22 @@ impl Entity {
                 Column::ThreadId,
                 Column::Poster,
                 Column::UpdatedAt,
-                Column::IsDeleted,
+                Column::ReplyStatus,
             ])
             .column_as(users::users::Column::Name, "poster_username")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::Body)), "parent_body")
-            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, bool, String, Option<String>)>()
+            .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::ReplyStatus)), "parent_status")
+            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, i32, String, Option<String>, Option<i32>)>()
             .all(db)
             .await?;
 
         let result = replies_with_data
             .into_iter()
-            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, is_deleted, poster_username, parent_body)| {
-                let reply_to = match (reply_to_id, parent_body) {
-                    (Some(id), Some(text)) => Some((id, text)),
-                    (None, None) => None,
-                    _ => panic!("Impossible case: reply_to_id and parent_body should both be Some or both be None"),
+            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, reply_status, poster_username, parent_body, parent_status)| {
+                let reply_to = match (reply_to_id, parent_body, parent_status) {
+                    (Some(id), Some(text), Some(status)) => Some((id, text, status)),
+                    (None, None, None) => None,
+                    _ => panic!("Impossible case: reply_to_id, parent_body, and parent_status should all be Some or all be None"),
                 };
 
                 ReplyResponse {
@@ -128,7 +129,7 @@ impl Entity {
                     poster,
                     poster_username,
                     updated_at,
-                    is_deleted,
+                    reply_status,
                 }
             })
             .collect();

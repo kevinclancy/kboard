@@ -4,6 +4,7 @@ use loco_rs::{auth::jwt, hash, prelude::*};
 use serde::{Deserialize, Serialize};
 use serde_json::Map;
 use uuid::Uuid;
+use validator::Validate;
 
 pub use super::_entities::users::{self, ActiveModel, Entity, Model};
 
@@ -16,16 +17,39 @@ pub struct LoginParams {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Validate)]
 pub struct RegisterParams {
+    #[validate(email(message = "Invalid email format"))]
     pub email: String,
+    #[validate(custom(function = "validate_password"))]
     pub password: String,
+    #[validate(length(min = 2, max = 38, message = "Name must be between 2 and 38 characters long."))]
     pub name: String,
+}
+
+fn validate_password(password: &str) -> Result<(), validator::ValidationError> {
+    if password.len() < 8 {
+        return Err(validator::ValidationError::new("Password must be at least 8 characters long."));
+    }
+    
+    if !password.chars().any(|c| c.is_alphabetic()) {
+        return Err(validator::ValidationError::new("Password must contain at least one letter."));
+    }
+    
+    if !password.chars().any(|c| c.is_ascii_digit()) {
+        return Err(validator::ValidationError::new("Password must contain at least one digit."));
+    }
+    
+    if !password.chars().any(|c| c.is_ascii_punctuation()) {
+        return Err(validator::ValidationError::new("Password must contain at least one punctuation mark."));
+    }
+    
+    Ok(())
 }
 
 #[derive(Debug, Validate, Deserialize)]
 pub struct Validator {
-    #[validate(length(min = 2, message = "Name must be at least 2 characters long."))]
+    #[validate(length(min = 2, max = 38, message = "Name must be between 2 and 38 characters long."))]
     pub name: String,
     #[validate(email(message = "invalid email"))]
     pub email: String,
@@ -223,6 +247,9 @@ impl Model {
         db: &DatabaseConnection,
         params: &RegisterParams,
     ) -> ModelResult<Self> {
+        // Validate the registration parameters
+        params.validate().map_err(|e| ModelError::Any(e.into()))?;
+        
         let txn = db.begin().await?;
 
         if users::Entity::find()

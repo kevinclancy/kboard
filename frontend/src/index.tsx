@@ -66,6 +66,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/boards" element={<KBoard uiState={{ type: "board" }} />} />
           <Route path="/boards/:boardId/threads" element={<DiscussionBoardPage />} />
           <Route path="/boards/:boardId/threads/:threadId" element={<ThreadViewerPage />} />
+          <Route path="/about" element={<KBoard uiState={{ type: "about_me" }} />} />
           <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
           <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
           <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />

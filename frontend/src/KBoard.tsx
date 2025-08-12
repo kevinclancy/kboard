@@ -10,6 +10,7 @@ import { LoginForm } from "./LoginForm";
 import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
 import { VerifyEmail } from "./VerifyEmail";
+import { AboutMe } from "./AboutMe";
 
 export type AuthState =
   // User is not authenticated
@@ -24,6 +25,8 @@ export type UIState =
   | { type: "discussion_board"; boardId: number }
   // Specific thread viewer is displayed
   | { type: "thread_viewer"; boardId: number; threadId: number }
+  // About Me page is displayed
+  | { type: "about_me" }
   // Registration form is displayed
   | { type: "register" }
   // Login form is displayed
@@ -65,6 +68,8 @@ export function KBoard({ uiState }: KBoardProps) {
         return <DiscussionBoard boardId={uiState.boardId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
       case "thread_viewer":
         return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
+      case "about_me":
+        return <AboutMe />;
       case "register":
         return <RegisterForm />;
       case "login":
@@ -92,6 +97,11 @@ export function KBoard({ uiState }: KBoardProps) {
             <Link to="/boards">
               <Button bgColor="brown">
                 Discussion Boards
+              </Button>
+            </Link>
+            <Link to="/about">
+              <Button bgColor="brown">
+                About Me
               </Button>
             </Link>
             {authState.type === "logged_out" && (

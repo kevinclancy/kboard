@@ -50,6 +50,11 @@ struct UpdateReplyRequest {
     body: String,
 }
 
+#[derive(Deserialize)]
+struct DeleteReplyRequest {
+    action: String, // "delete" or "hide"
+}
+
 #[derive(Serialize)]
 struct ThreadsResponse {
     threads: Vec<ThreadWithPosterName>,
@@ -183,7 +188,7 @@ async fn update_reply(
         .one(&ctx.db)
         .await?
         .ok_or_else(|| loco_rs::Error::NotFound)?;
-    
+
     // Check if the user owns this reply
     if reply.poster != user.id {
         return Err(loco_rs::Error::Unauthorized("You can only edit your own replies".to_string()));
@@ -198,12 +203,13 @@ async fn update_reply(
     format::json(serde_json::json!({"success": true}))
 }
 
-/// Delete a reply (soft delete by setting is_deleted flag)
+/// Delete or hide a reply based on action parameter
 #[debug_handler]
 async fn delete_reply(
     auth: auth::JWT,
     Path((_board_id, _thread_id, reply_id)): Path<(i32, i32, i32)>,
     State(ctx): State<AppContext>,
+    Json(req): Json<DeleteReplyRequest>,
 ) -> Result<Response> {
     let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
 
@@ -212,16 +218,32 @@ async fn delete_reply(
         .one(&ctx.db)
         .await?
         .ok_or_else(|| loco_rs::Error::NotFound)?;
-    
-    // Check if the user owns this reply or is a moderator
-    if reply.poster != user.id && !user.is_moderator {
-        return Err(loco_rs::Error::Unauthorized("You can only delete your own replies or must be a moderator".to_string()));
-    }
 
-    // Soft delete the reply by setting is_deleted to true
+    // Determine the required permission based on action
+    let new_status = match req.action.as_str() {
+        "delete" => {
+            // Check if the user owns this reply or is a moderator
+            if reply.poster != user.id && !user.is_moderator {
+                return Err(loco_rs::Error::Unauthorized("You can only delete your own replies or must be a moderator".to_string()));
+            }
+            3 // deleted status
+        },
+        "hide" => {
+            // Only moderators can hide replies
+            if !user.is_moderator {
+                return Err(loco_rs::Error::Unauthorized("Only moderators can hide replies".to_string()));
+            }
+            2 // hidden status
+        },
+        _ => {
+            return Err(loco_rs::Error::BadRequest("Invalid action. Must be 'delete' or 'hide'".to_string()));
+        }
+    };
+
+    // Update the reply status
     use sea_orm::{ActiveModelTrait, Set};
     let mut active_reply: crate::models::replies::ActiveModel = reply.into();
-    active_reply.is_deleted = Set(true);
+    active_reply.reply_status = Set(new_status);
     active_reply.update(&ctx.db).await?;
 
     format::json(serde_json::json!({"success": true}))

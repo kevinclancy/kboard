@@ -10,13 +10,13 @@ import Cookies from "js-cookie";
 interface Reply {
   id: number;
   body: string;
-  /// Tuple containing [reply_id, reply_body_text] - the ID and text of the reply being responded to
-  reply_to: [number, string] | null;
+  /// [reply_id, reply_body_text, reply_status] - the ID, text, and status of the reply being responded to
+  reply_to: [number, string, number] | null;
   thread_id: number;
   poster: number;
   poster_username: string;
   updated_at: string;
-  is_deleted: boolean;
+  reply_status: number;
 }
 
 type ReplyEditorState =
@@ -43,6 +43,11 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
   const [replyEditorState, setReplyEditorState] = useState<ReplyEditorState>({ type: "closed" });
 
   const isCurrentUserModerator = Cookies.get("is_moderator") === "true";
+
+  // Reply status constants
+  const LIVE = 1;
+  const HIDDEN = 2;
+  const DELETED = 3;
 
   const fetchReplies = async () => {
     try {
@@ -95,7 +100,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
     setPageNumber(page - 1); // Chakra UI uses 1-based indexing, our API uses 0-based
   };
 
-  const handleDeleteReply = async (replyId: number) => {
+  const handleReplyAction = async (replyId: number, action: 'delete' | 'hide') => {
     try {
       const response = await fetch(`${API_ROOT}/boards/${boardId}/threads/${threadId}/replies/${replyId}`, {
         method: "DELETE",
@@ -103,18 +108,19 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ action }),
       });
 
       if (response.ok) {
         fetchReplies(); // Refresh the replies list
       } else if (response.status === 401 || response.status === 403) {
         onAuthenticationError();
-        setError("Authentication error. Please log in to delete replies.");
+        setError(`Authentication error. Please log in to ${action} replies.`);
       } else {
-        setError("Failed to delete reply");
+        setError(`Failed to ${action} reply`);
       }
     } catch (err) {
-      console.error("Delete error:", err);
+      console.error(`${action} error:`, err);
       setError("Network error. Please check your connection.");
     }
   };
@@ -168,7 +174,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
               setError("You must be logged in to reply to this thread. Please log in or register first.");
             } else {
               setReplyEditorState(
-                replyEditorState.type === "new_reply" 
+                replyEditorState.type === "new_reply"
                   ? { type: "closed" }
                   : { type: "new_reply" }
               );
@@ -186,10 +192,10 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
       {/* Reply Editor */}
       {replyEditorState.type === "new_reply" && (
         <Box mb={6}>
-          <ReplyEditor 
-            replyMode={{ 
-              type: "existing_thread", 
-              boardId: boardId, 
+          <ReplyEditor
+            replyMode={{
+              type: "existing_thread",
+              boardId: boardId,
               threadId: threadId,
               replyTo: replyEditorState.replyToId
             }}
@@ -202,12 +208,14 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
           />
         </Box>
       )}
-      
+
       <VStack align="stretch" gap={4}>
         {!Array.isArray(replies) || replies.length === 0 ? (
           <Text color="gray.500">No replies found</Text>
         ) : (
-          replies.map((reply) => (
+          replies
+            .filter(reply => reply.reply_status !== HIDDEN) // Don't display hidden replies at all
+            .map((reply) => (
             <Box
               key={reply.id}
               id={`reply-${reply.id}`}
@@ -245,10 +253,10 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                       Last updated {formatDate(reply.updated_at)}
                     </Text>
                     <HStack gap={2}>
-                      {authState.type === "logged_in" && !reply.is_deleted && (
-                        <Button 
-                          size="xs" 
-                          variant="outline" 
+                      {authState.type === "logged_in" && reply.reply_status === LIVE && (
+                        <Button
+                          size="xs"
+                          variant="outline"
                           colorScheme="green"
                           onClick={() => {
                             if (replyEditorState.type === "new_reply" && replyEditorState.replyToId === reply.id) {
@@ -261,28 +269,42 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                           Reply
                         </Button>
                       )}
-                      {authState.type === "logged_in" && authState.username === reply.poster_username && !reply.is_deleted && (
-                        <Button 
-                          size="xs" 
-                          variant="outline" 
+                      {authState.type === "logged_in" && authState.username === reply.poster_username && reply.reply_status === LIVE && (
+                        <Button
+                          size="xs"
+                          variant="outline"
                           colorScheme="blue"
                           onClick={() => setReplyEditorState({ type: "editing_reply", replyId: reply.id })}
                         >
                           Edit
                         </Button>
                       )}
-                      {authState.type === "logged_in" && (authState.username === reply.poster_username || isCurrentUserModerator) && !reply.is_deleted && (
-                        <Button 
-                          size="xs" 
-                          variant="outline" 
+                      {authState.type === "logged_in" && (authState.username === reply.poster_username || isCurrentUserModerator) && reply.reply_status === LIVE && (
+                        <Button
+                          size="xs"
+                          variant="outline"
                           colorScheme="red"
                           onClick={() => {
                             if (window.confirm("Are you sure you want to delete this reply?")) {
-                              handleDeleteReply(reply.id);
+                              handleReplyAction(reply.id, 'delete');
                             }
                           }}
                         >
                           Delete
+                        </Button>
+                      )}
+                      {authState.type === "logged_in" && isCurrentUserModerator && reply.reply_status === LIVE && (
+                        <Button
+                          size="xs"
+                          variant="outline"
+                          colorScheme="orange"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to hide this reply? Hidden replies are completely invisible to users.")) {
+                              handleReplyAction(reply.id, 'hide');
+                            }
+                          }}
+                        >
+                          Hide
                         </Button>
                       )}
                     </HStack>
@@ -299,31 +321,43 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                       fontStyle="italic"
                     >
                       <Text fontSize="sm" mb={2}>
-                        <a 
-                          href={`#reply-${reply.reply_to[0]}`}
-                          style={{ color: "#2563eb", textDecoration: "underline" }}
-                          onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#1d4ed8"}
-                          onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#2563eb"}
-                        >
-                          Reply #{reply.reply_to[0]}
-                        </a>
+                        {reply.reply_to[2] === HIDDEN ? (
+                          <Text as="span" color="gray.500">
+                            In Response To:
+                          </Text>
+                        ) : (
+                          <a
+                            href={`#reply-${reply.reply_to[0]}`}
+                            style={{ color: "#2563eb", textDecoration: "underline" }}
+                            onMouseEnter={(e) => (e.target as HTMLAnchorElement).style.color = "#1d4ed8"}
+                            onMouseLeave={(e) => (e.target as HTMLAnchorElement).style.color = "#2563eb"}
+                          >
+                            In Response To:
+                          </a>
+                        )}
                       </Text>
                       <Text fontSize="sm" color="gray.700">
-                        "{reply.reply_to[1]}"
+                        {reply.reply_to[2] === HIDDEN ? (
+                          "[Hidden reply]"
+                        ) : reply.reply_to[2] === DELETED ? (
+                          "[Deleted reply]"
+                        ) : (
+                          `"${reply.reply_to[1]}"`
+                        )}
                       </Text>
                     </Box>
                   )}
 
                   {/* Reply body */}
                   <Box>
-                    {replyEditorState.type === "editing_reply" && replyEditorState.replyId === reply.id && !reply.is_deleted ? (
-                      <ReplyEditor 
-                        replyMode={{ 
-                          type: "edit_reply", 
-                          boardId: boardId, 
-                          threadId: threadId, 
-                          replyId: reply.id, 
-                          currentText: reply.body 
+                    {replyEditorState.type === "editing_reply" && replyEditorState.replyId === reply.id && reply.reply_status === LIVE ? (
+                      <ReplyEditor
+                        replyMode={{
+                          type: "edit_reply",
+                          boardId: boardId,
+                          threadId: threadId,
+                          replyId: reply.id,
+                          currentText: reply.body
                         }}
                         onPostSucceeded={() => {
                           setReplyEditorState({ type: "closed" });
@@ -333,8 +367,8 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                         onCancel={() => setReplyEditorState({ type: "closed" })}
                       />
                     ) : (
-                      <Text whiteSpace="pre-wrap" color={reply.is_deleted ? "gray.500" : "inherit"} fontStyle={reply.is_deleted ? "italic" : "normal"}>
-                        {reply.is_deleted ? "This reply has been deleted" : reply.body}
+                      <Text whiteSpace="pre-wrap" color={reply.reply_status === DELETED ? "gray.500" : "inherit"} fontStyle={reply.reply_status === DELETED ? "italic" : "normal"}>
+                        {reply.reply_status === DELETED ? "This reply has been deleted" : reply.body}
                       </Text>
                     )}
                   </Box>

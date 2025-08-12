@@ -37,6 +37,27 @@ const [editingId, setEditingId] = useState<number | null>(null);
 const [replyToId, setReplyToId] = useState<number | null>(null);
 ```
 
+### Strong Preconditions for Helper Functions
+- Write helper functions with demanding preconditions that assume non-null values
+- This makes calling code more readable by avoiding repetitive null checks
+- Use clear function names that indicate the precondition requirements
+
+Example:
+```typescript
+// Preferred: Strong precondition - assumes reply.reply_to is non-null
+const getReplyToStatus = (reply: Reply): number => reply.reply_to![2];
+const isReplyToHidden = (reply: Reply): boolean => reply.reply_to![2] === 2;
+
+// Usage: Caller handles null check once, then uses demanding functions
+if (reply.reply_to) {
+  const isHidden = isReplyToHidden(reply);
+  const status = getReplyToStatus(reply);
+}
+
+// Avoid: Defensive functions that repeat null checks
+const isReplyToHidden = (reply: Reply): boolean => reply.reply_to && reply.reply_to[2] === 2;
+```
+
 ## General Principles
 
 - Prioritize type safety and clear state management

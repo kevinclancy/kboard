@@ -141,6 +141,13 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
           <Text fontSize="2xl" fontWeight="bold" mb={2} textAlign="left">
             {board.title}
           </Text>
+          {board.description && (
+            <Box mb={4} p={3} bg="gray.50" borderRadius="md" borderLeft="4px solid" borderLeftColor="blue.400">
+              <Text fontSize="md" color="gray.700" lineHeight="1.5">
+                {board.description}
+              </Text>
+            </Box>
+          )}
           <Button
             onClick={() => {
               if (authState.type === "logged_out") {
