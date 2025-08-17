@@ -41,6 +41,7 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
   const [threadTitle, setThreadTitle] = useState<string>("");
   const [boardName, setBoardName] = useState<string>("");
   const [replyEditorState, setReplyEditorState] = useState<ReplyEditorState>({ type: "closed" });
+  const [initialTargetHandled, setInitialTargetHandled] = useState(false);
 
   const isCurrentUserModerator = Cookies.get("is_moderator") === "true";
 
@@ -78,9 +79,85 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
     }
   };
 
+  // Function to find which page contains a specific reply
+  const findReplyPage = async (replyId: number) => {
+    try {
+      const url = `${API_ROOT}/boards/${boardId}/threads/${threadId}/replies/find_page?reply_id=${replyId}&page_size=${pageSize}`;
+      const response = await fetch(url, {
+        method: "GET",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.page_number;
+      }
+    } catch (err) {
+      console.error('Error finding reply page:', err);
+    }
+    return null;
+  };
+
+  // Handle initial target reply navigation
+  useEffect(() => {
+    const handleInitialTarget = async () => {
+      if (!window.location.hash || initialTargetHandled) {
+        return;
+      }
+
+      const targetId = window.location.hash.substring(1);
+      if (!targetId.startsWith('reply-')) {
+        setInitialTargetHandled(true);
+        return;
+      }
+
+      const replyId = parseInt(targetId.replace('reply-', ''));
+      if (isNaN(replyId)) {
+        setInitialTargetHandled(true);
+        return;
+      }
+
+      const correctPage = await findReplyPage(replyId);
+      if (correctPage !== null && correctPage !== pageNumber) {
+        setPageNumber(correctPage);
+      }
+      setInitialTargetHandled(true);
+    };
+
+    handleInitialTarget();
+  }, [boardId, threadId]);
+
+  // Normal fetch replies
   useEffect(() => {
     fetchReplies();
   }, [boardId, threadId, pageSize, pageNumber]);
+
+  // Reset target handling when route changes
+  useEffect(() => {
+    setInitialTargetHandled(false);
+  }, [boardId, threadId]);
+
+  // Handle scrolling to target reply after page loads
+  useEffect(() => {
+    if (loading) return;
+    if (!window.location.hash) return;
+
+    const targetId = window.location.hash.substring(1);
+    const element = document.getElementById(targetId);
+    if (!element) return;
+
+    setTimeout(() => {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // Manually apply highlight styles since React Router navigation doesn't trigger :target
+      element.style.backgroundColor = '#fef3c7'; // yellow.100
+      element.style.borderColor = '#facc15'; // yellow.400
+      element.style.borderWidth = '2px';
+      element.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'; // md shadow
+    }, 100);
+  }, [loading, replies]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('en-US', {
@@ -209,7 +286,28 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
         </Box>
       )}
 
-      <VStack align="stretch" gap={4}>
+      {totalPages > 1 && (
+        <Pagination.Root
+          count={totalReplies}
+          pageSize={pageSize}
+          page={pageNumber + 1}
+          onPageChange={(details) => handlePageChange(details.page)}
+        >
+          <>
+            <Pagination.PrevTrigger />
+            <Pagination.Items
+              render={(page) => (
+                <IconButton variant={{ base: "ghost", _selected: "outline" }}>
+                  {page.value}
+                </IconButton>
+              )}
+            />
+            <Pagination.NextTrigger />
+          </>
+        </Pagination.Root>
+      )}
+
+      <VStack align="stretch" gap={4} mt={totalPages > 1 ? 4 : 0}>
         {!Array.isArray(replies) || replies.length === 0 ? (
           <Text color="gray.500">No replies found</Text>
         ) : (

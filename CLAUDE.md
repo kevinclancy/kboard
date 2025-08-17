@@ -4,6 +4,28 @@ This file contains development preferences and guidelines for working on the KBo
 
 ## Code Documentation
 
+### Comment Philosophy
+- Prefer interface comments and data structure comments over action comments
+- Comment record fields and union variants to explain their purpose
+- Avoid redundant action comments that simply restate what the code does
+- Good comments explain "why" and "what" (for complex data), not "how"
+- If function names and documentation clearly explain the action, additional comments are unnecessary
+
+Examples:
+```typescript
+// Good: Interface/data structure comment
+/// [reply_id, reply_body_text, reply_status] - the ID, text, and status of the reply being responded to
+reply_to: [number, string, number] | null;
+
+// Avoid: Redundant action comment
+// Find the thread by ID
+let thread = findThreadById(threadId);
+
+// Good: Non-obvious information
+// Calculate page using 0-based indexing to match backend API
+let page_number = replies_before / query.page_size;
+```
+
 ### Tuple Type Comments
 - Use triple-slash comments (`///`) for VS Code IntelliSense support
 - Place comments on the line above the field

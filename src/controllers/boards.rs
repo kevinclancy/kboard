@@ -46,6 +46,17 @@ struct CreateReplyResponse {
 }
 
 #[derive(Deserialize)]
+pub struct FindReplyPageQuery {
+    reply_id: i32,
+    page_size: u64,
+}
+
+#[derive(Serialize)]
+pub struct FindReplyPageResponse {
+    page_number: u64,
+}
+
+#[derive(Deserialize)]
 struct UpdateReplyRequest {
     body: String,
 }
@@ -249,14 +260,77 @@ async fn delete_reply(
     format::json(serde_json::json!({"success": true}))
 }
 
+#[debug_handler]
+pub async fn find_reply_page(
+    Path((_board_id, thread_id)): Path<(i32, i32)>,
+    Query(query): Query<FindReplyPageQuery>,
+    State(ctx): State<AppContext>,
+) -> Result<Json<FindReplyPageResponse>> {
+    use sea_orm::{EntityTrait, QueryFilter, ColumnTrait, PaginatorTrait};
+
+    // First verify the reply exists in this thread
+    let reply = ReplyEntity::find()
+        .filter(crate::models::replies::Column::Id.eq(query.reply_id))
+        .filter(crate::models::replies::Column::ThreadId.eq(thread_id))
+        .one(&ctx.db)
+        .await?;
+
+    if reply.is_none() {
+        return Err(loco_rs::Error::NotFound);
+    }
+
+    // Count replies that come before this one (ordered by ID, same as in get_replies)
+    let replies_before = ReplyEntity::find()
+        .filter(crate::models::replies::Column::ThreadId.eq(thread_id))
+        .filter(crate::models::replies::Column::Id.lt(query.reply_id))
+        .count(&ctx.db)
+        .await?;
+
+    // Calculate which page this reply is on (0-indexed)
+    let page_number = replies_before / query.page_size;
+
+    Ok(Json(FindReplyPageResponse { page_number }))
+}
+
+#[debug_handler]
+pub async fn delete_thread(
+    auth: auth::JWT,
+    Path((_board_id, thread_id)): Path<(i32, i32)>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
+    use sea_orm::{EntityTrait, ModelTrait, QueryFilter, ColumnTrait};
+
+    let thread = crate::models::threads::Entity::find_by_id(thread_id)
+        .one(&ctx.db)
+        .await?;
+
+    let thread = thread.ok_or(loco_rs::Error::NotFound)?;
+
+    let current_user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    if !current_user.is_moderator {
+        return Err(loco_rs::Error::Unauthorized("You can only delete your own threads unless you are a moderator".to_string()));
+    }
+
+    ReplyEntity::delete_many()
+        .filter(crate::models::replies::Column::ThreadId.eq(thread_id))
+        .exec(&ctx.db)
+        .await?;
+
+    thread.delete(&ctx.db).await?;
+
+    format::json(serde_json::json!({"success": true}))
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api/boards/")
         .add("/", get(list))
         .add("/{id}/threads", get(get_threads))
         .add("/{id}/threads", post(create_thread))
+        .add("/{board_id}/threads/{thread_id}", delete(delete_thread))
         .add("/{board_id}/threads/{thread_id}/replies", get(get_replies))
         .add("/{board_id}/threads/{thread_id}/replies", post(create_reply))
+        .add("/{board_id}/threads/{thread_id}/replies/find_page", get(find_reply_page))
         .add("/{board_id}/threads/{thread_id}/replies/{reply_id}", patch(update_reply))
         .add("/{board_id}/threads/{thread_id}/replies/{reply_id}", delete(delete_reply))
 }

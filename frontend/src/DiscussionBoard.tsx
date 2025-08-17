@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { ReplyEditor } from "./ReplyEditor";
 import { API_ROOT } from "./config";
 import { AuthState } from "./KBoard";
+import Cookies from "js-cookie";
 
 /**
  * DiscussionBoard component represents many threads discussing a specific named topic.
@@ -47,6 +48,35 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
   const [pageNumber, setPageNumber] = useState(0);
   const [totalThreads, setTotalThreads] = useState(0);
   const [showNewThreadEditor, setShowNewThreadEditor] = useState(false);
+
+  const isCurrentUserModerator = Cookies.get("is_moderator") === "true";
+
+  const deleteThread = async (threadId: number) => {
+    if (!window.confirm("Are you sure you want to delete this thread? This will also delete all replies in the thread.")) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_ROOT}/boards/${boardId}/threads/${threadId}`, {
+        method: "DELETE",
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        fetchThreads();
+      } else if (response.status === 401) {
+        onAuthenticationError();
+      } else {
+        setError('Failed to delete thread');
+      }
+    } catch (err) {
+      console.error('Delete thread error:', err);
+      setError('Network error. Please check your connection.');
+    }
+  };
 
   const fetchThreads = async () => {
     try {
@@ -115,6 +145,7 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
     setPageNumber(page - 1); // Chakra UI uses 1-based indexing, our API uses 0-based
   };
 
+
   const totalPages = Math.ceil(totalThreads / pageSize);
 
   if (loading) {
@@ -159,6 +190,7 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
             }}
             colorScheme="blue"
             size="md"
+            mb={4}
           >
             {showNewThreadEditor ? "Cancel" : "New Thread"}
           </Button>
@@ -186,7 +218,7 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
         ) : (
           <>
             {/* Header row */}
-            <Grid templateColumns="2fr 1fr 1fr" gap={4} p={3} bg="gray.100" borderRadius="md">
+            <Grid templateColumns={isCurrentUserModerator ? "2fr 1fr 1fr auto" : "2fr 1fr 1fr"} gap={4} p={3} bg="gray.100" borderRadius="md">
               <GridItem>
                 <Text fontWeight="bold">Title</Text>
               </GridItem>
@@ -196,13 +228,18 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
               <GridItem>
                 <Text fontWeight="bold">Poster</Text>
               </GridItem>
+              {isCurrentUserModerator && (
+                <GridItem>
+                  <Text fontWeight="bold">Actions</Text>
+                </GridItem>
+              )}
             </Grid>
 
             {/* Thread rows */}
             {Array.isArray(threads) && threads.map((thread) => (
               <Grid
                 key={thread.id}
-                templateColumns="2fr 1fr 1fr"
+                templateColumns={isCurrentUserModerator ? "2fr 1fr 1fr auto" : "2fr 1fr 1fr"}
                 gap={4}
                 p={3}
                 borderWidth={1}
@@ -223,6 +260,18 @@ export function DiscussionBoard({ boardId, authState, onAuthenticationError }: D
                 <GridItem>
                   <Text color="gray.600">{thread.poster_username}</Text>
                 </GridItem>
+                {isCurrentUserModerator && (
+                  <GridItem>
+                    <Button
+                      size="sm"
+                      colorScheme="red"
+                      variant="outline"
+                      onClick={() => deleteThread(thread.id)}
+                    >
+                      Delete
+                    </Button>
+                  </GridItem>
+                )}
               </Grid>
             ))}
           </>

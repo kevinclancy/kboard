@@ -11,6 +11,7 @@ import { ResetPasswordForm } from "./ResetPasswordForm";
 import { NewPasswordForm } from "./NewPasswordForm";
 import { VerifyEmail } from "./VerifyEmail";
 import { AboutMe } from "./AboutMe";
+import { SearchResults } from "./SearchResults";
 
 export type AuthState =
   // User is not authenticated
@@ -27,6 +28,8 @@ export type UIState =
   | { type: "thread_viewer"; boardId: number; threadId: number }
   // About Me page is displayed
   | { type: "about_me" }
+  // Search results page is displayed
+  | { type: "search"; searchQuery: string }
   // Registration form is displayed
   | { type: "register" }
   // Login form is displayed
@@ -70,6 +73,8 @@ export function KBoard({ uiState }: KBoardProps) {
         return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
       case "about_me":
         return <AboutMe />;
+      case "search":
+        return <SearchResults searchQuery={uiState.searchQuery} />;
       case "register":
         return <RegisterForm />;
       case "login":
@@ -99,11 +104,6 @@ export function KBoard({ uiState }: KBoardProps) {
                 Discussion Boards
               </Button>
             </Link>
-            <Link to="/about">
-              <Button bgColor="brown">
-                About Me
-              </Button>
-            </Link>
             {authState.type === "logged_out" && (
               <Link to="/login">
                 <Button bgColor="brown">
@@ -116,6 +116,11 @@ export function KBoard({ uiState }: KBoardProps) {
             </Link>
             <Link to="/request_reset">
               <Button bgColor="brown">Reset Password</Button>
+            </Link>
+            <Link to="/about">
+              <Button bgColor="blue.700">
+                About Me
+              </Button>
             </Link>
           </HStack>
         </HStack>

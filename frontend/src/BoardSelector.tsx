@@ -1,6 +1,6 @@
-import { Box, Text, VStack, Spinner } from "@chakra-ui/react";
+import { Box, Text, VStack, Spinner, Input, Button, HStack } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { API_ROOT } from "./config";
 
 interface Board {
@@ -15,6 +15,9 @@ export function BoardSelector() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchBoards = async () => {
@@ -43,6 +46,18 @@ export function BoardSelector() {
 
     fetchBoards();
   }, []);
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search/${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleSearchKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
 
   if (loading) {
     return (
@@ -75,6 +90,26 @@ asymmetry, bite issues, and emotional impact. Share your story, ask questions, a
 going through. You're not alone—this space exists so we can heal, vent, and learn together.
         </Text>
       </Box>
+      
+      <HStack mb={4} gap={2}>
+        <Input
+          placeholder="Search all replies..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onKeyPress={handleSearchKeyPress}
+          size="md"
+          flex={1}
+        />
+        <Button
+          onClick={handleSearch}
+          colorScheme="blue"
+          size="md"
+          disabled={!searchQuery.trim()}
+        >
+          Search
+        </Button>
+      </HStack>
+      
       <VStack align="stretch" gap={2}>
         {boards.length === 0 ? (
           <Text color="gray.500">No boards found</Text>

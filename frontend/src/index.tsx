@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { ChakraProvider } from "@chakra-ui/react";
 import { BrowserRouter, Routes, Route, useParams } from "react-router-dom";
 import { KBoard, UIState } from "./KBoard";
+import { SearchResults } from "./SearchResults";
 import system from "./theme";
 
 function DiscussionBoardPage() {
@@ -51,6 +52,18 @@ function VerifyEmailPage() {
   return <KBoard uiState={uiState} />;
 }
 
+function SearchPage() {
+  const { query } = useParams<{ query: string }>();
+  const searchQuery = query ? decodeURIComponent(query) : "";
+
+  const uiState: UIState = {
+    type: "search",
+    searchQuery: searchQuery
+  };
+
+  return <KBoard uiState={uiState} />;
+}
+
 const root = document.getElementById("root");
 
 if (!root) {
@@ -67,6 +80,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/boards/:boardId/threads" element={<DiscussionBoardPage />} />
           <Route path="/boards/:boardId/threads/:threadId" element={<ThreadViewerPage />} />
           <Route path="/about" element={<KBoard uiState={{ type: "about_me" }} />} />
+          <Route path="/search/:query" element={<SearchPage />} />
           <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
           <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
           <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />
