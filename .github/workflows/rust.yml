@@ -43,7 +43,7 @@ jobs:
     - name: Create deployment package
       run: |
         mkdir deploy
-        cp target/x86_64-unknown-linux-gnu/release/kboard-cli deploy/
+        cp target/release/kboard-cli deploy/
         cp -r config deploy/
         tar -czf deployment.tar.gz -C deploy .
 
