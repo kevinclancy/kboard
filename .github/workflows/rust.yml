@@ -13,6 +13,7 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    container: amazonlinux:2023
 
     steps:
     - uses: actions/checkout@v4
@@ -43,7 +44,7 @@ jobs:
     - name: Create deployment package
       run: |
         mkdir deploy
-        cp ./target/release/kboard-cli deploy/
+        cp target/release/kboard-cli deploy/
         cp -r config deploy/
         tar -czf deployment.tar.gz -C deploy .
 
