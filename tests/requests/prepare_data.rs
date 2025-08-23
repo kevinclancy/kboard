@@ -3,7 +3,7 @@ use kboard::{models::users, views::auth::LoginResponse};
 use loco_rs::{app::AppContext, TestServer};
 
 const USER_EMAIL: &str = "test@loco.com";
-const USER_PASSWORD: &str = "1234";
+const USER_PASSWORD: &str = "ravlamansoa222!";
 
 pub struct LoggedInUser {
     pub user: users::Model,

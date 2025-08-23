@@ -16,7 +16,7 @@ async fn test_model() {
     configure_insta!();
 
     let boot = boot_test::<App>().await.unwrap();
-    seed::<App>(&boot.app_context).await.unwrap();
+    let a = seed::<App>(&boot.app_context).await.unwrap();
 
     // query your model, e.g.:
     //

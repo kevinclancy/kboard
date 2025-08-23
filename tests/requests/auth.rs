@@ -27,7 +27,7 @@ async fn can_register() {
         let payload = serde_json::json!({
             "name": "loco",
             "email": email,
-            "password": "12341234"
+            "password": "ravlamansoa222!"
         });
 
         let response = request.post("/api/auth/register").json(&payload).await;
@@ -57,7 +57,7 @@ async fn can_register() {
 }
 
 #[rstest]
-#[case("login_with_valid_password", "12341234")]
+#[case("login_with_valid_password", "ravlamansoa222!")]
 #[case("login_with_invalid_password", "invalid-password")]
 #[tokio::test]
 #[serial]
@@ -69,7 +69,7 @@ async fn can_login_with_verify(#[case] test_name: &str, #[case] password: &str) 
         let register_payload = serde_json::json!({
             "name": "loco",
             "email": email,
-            "password": "12341234"
+            "password": "ravlamansoa222!"
         });
 
         //Creating a new user
@@ -149,7 +149,7 @@ async fn can_login_without_verify() {
 
     request::<App, _, _>(|request, _ctx| async move {
         let email = "test@loco.com";
-        let password = "12341234";
+        let password = "blblblblblblbl1234!";
         let register_payload = serde_json::json!({
             "name": "loco",
             "email": email,

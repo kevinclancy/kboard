@@ -43,7 +43,7 @@ export function AboutMe() {
       <Text fontSize="md" color="gray.700" lineHeight="1.3">
         A year later, my wrist doesn't bother me too much, despite having been fixed with several titanium screws. It has
         lost a small amount of mobility in bending forward and backward, and it makes a quiet clicking sound when I bend it forward,
-        but it's feels just as good as my pristine wrist in resting position. My jaw injury, on the other hand, was much more significant
+        but it feels just as good as my pristine wrist in resting position. My jaw injury, on the other hand, was much more significant
         psychologically. For one thing, it altered my appearance, making my face slightly asymmetric. More importantly,
         my jaw has a constant "off balance" and mildly fatigued sensation that changes how I experience everything. It's only
         been a year, so I think it's still healing. I want to discuss this experience with others who have broken their jaws.
