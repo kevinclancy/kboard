@@ -35,7 +35,7 @@ jobs:
       working-directory: ./frontend
 
     - name: Build backend
-      run: cargo build --verbose
+      run: cargo build --release
 
     - name: Run tests
       run: cargo test --verbose
@@ -43,7 +43,7 @@ jobs:
     - name: Create deployment package
       run: |
         mkdir deploy
-        cp target/release/kboard-cli deploy/
+        cp ./target/release/kboard-cli deploy/
         cp -r config deploy/
         tar -czf deployment.tar.gz -C deploy .
 
