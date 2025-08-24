@@ -16,14 +16,14 @@ jobs:
     container: amazonlinux:2023
 
     steps:
-    - uses: actions/checkout@v4
-
     - name: Install basic dependencies
       run: |
         yum update -y
         yum install -y tar gzip git curl
         yum groupinstall -y "Development Tools"
         yum install -y openssl-devel pkg-config
+
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-node@v4
       with:
