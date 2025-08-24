@@ -19,7 +19,7 @@ jobs:
     - name: Install basic dependencies
       run: |
         yum update -y
-        yum install -y tar gzip git curl
+        yum install -y tar gzip git
         yum groupinstall -y "Development Tools"
         yum install -y openssl-devel pkg-config
 
