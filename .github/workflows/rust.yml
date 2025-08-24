@@ -23,6 +23,12 @@ jobs:
         yum groupinstall -y "Development Tools"
         yum install -y openssl-devel pkg-config
 
+    - name: Install Rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source $HOME/.cargo/env
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
     - uses: actions/checkout@v4
 
     - uses: actions/setup-node@v4
