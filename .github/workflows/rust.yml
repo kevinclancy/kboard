@@ -12,23 +12,9 @@ env:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
-    container: amazonlinux:2023
+    runs-on: ubuntu-20.04
 
     steps:
-    - name: Install basic dependencies
-      run: |
-        yum update -y
-        yum install -y tar gzip git
-        yum groupinstall -y "Development Tools"
-        yum install -y openssl-devel pkg-config
-
-    - name: Install Rust
-      run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        source $HOME/.cargo/env
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-
     - uses: actions/checkout@v4
 
     - uses: actions/setup-node@v4
