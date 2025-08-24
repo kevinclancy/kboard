@@ -53,8 +53,10 @@ jobs:
     - name: Create deployment package
       run: |
         mkdir deploy
+        mkdir -p deploy/frontend/
         cp target/x86_64-unknown-linux-musl/release/kboard-cli deploy/
         cp -r config deploy/
+        cp -r frontend/dist/ deploy/frontend/
         tar -czf deployment.tar.gz -C deploy .
 
     - name: Upload build artifact
