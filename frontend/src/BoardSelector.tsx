@@ -83,8 +83,8 @@ export function BoardSelector() {
       </Text>
       <Box mb={6} p={4} bg="blue.50" borderRadius="md" borderLeft="4px solid" borderLeftColor="blue.400">
         <Text fontSize="md" color="gray.700" lineHeight="1.6">
-Welcome to BrokenJaw.com, a community space for anyone who's experienced a broken jaw and the long journey that follows.
-Whether your injury came from an accident, surgery, or something less expected, this board is here to support open discussion
+Welcome to BrokenJaw.net, a community space for anyone who's experienced a broken jaw and the long journey that follows.
+This board is here to support open discussion
 about the entire experience—from the moment of trauma to the complexities of treatment, recovery, and lasting effects like facial
 asymmetry, bite issues, and emotional impact. Share your story, ask questions, and connect with others who understand what you're
 going through. You're not alone—this space exists so we can heal, vent, and learn together.

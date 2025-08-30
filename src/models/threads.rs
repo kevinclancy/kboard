@@ -14,6 +14,7 @@ pub struct ThreadWithPosterName {
     pub board_id: i32,
     pub poster: i32,
     pub poster_username: String,
+    pub poster_is_banned: bool,
     pub last_active: chrono::NaiveDateTime,
     pub num_replies: i32,
 }
@@ -113,13 +114,14 @@ impl Entity {
                 Column::NumReplies,
             ])
             .column_as(users::users::Column::Name, "poster_username")
-            .into_tuple::<(i32, String, String, i32, i32, chrono::NaiveDateTime, i32, String)>()
+            .column_as(users::users::Column::IsBanned, "poster_is_banned")
+            .into_tuple::<(i32, String, String, i32, i32, chrono::NaiveDateTime, i32, String, bool)>()
             .all(db)
             .await?;
 
         let result = threads_with_users
             .into_iter()
-            .map(|(id, title, description, board_id, poster, last_active, num_replies, poster_username)| {
+            .map(|(id, title, description, board_id, poster, last_active, num_replies, poster_username, poster_is_banned)| {
                 ThreadWithPosterName {
                     id,
                     title,
@@ -127,6 +129,7 @@ impl Entity {
                     board_id,
                     poster,
                     poster_username,
+                    poster_is_banned,
                     last_active,
                     num_replies,
                 }

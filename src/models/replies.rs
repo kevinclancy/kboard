@@ -14,6 +14,7 @@ pub struct ReplyResponse {
     pub thread_id: i32,
     pub poster: i32,
     pub poster_username: String,
+    pub poster_is_banned: bool,
     pub updated_at: DateTimeWithTimeZone,
     pub reply_status: i32,
 }
@@ -106,15 +107,16 @@ impl Entity {
                 Column::ReplyStatus,
             ])
             .column_as(users::users::Column::Name, "poster_username")
+            .column_as(users::users::Column::IsBanned, "poster_is_banned")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::Body)), "parent_body")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::ReplyStatus)), "parent_status")
-            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, i32, String, Option<String>, Option<i32>)>()
+            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, i32, String, bool, Option<String>, Option<i32>)>()
             .all(db)
             .await?;
 
         let result = replies_with_data
             .into_iter()
-            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, reply_status, poster_username, parent_body, parent_status)| {
+            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, reply_status, poster_username, poster_is_banned, parent_body, parent_status)| {
                 let reply_to = match (reply_to_id, parent_body, parent_status) {
                     (Some(id), Some(text), Some(status)) => Some((id, text, status)),
                     (None, None, None) => None,
@@ -128,6 +130,7 @@ impl Entity {
                     thread_id,
                     poster,
                     poster_username,
+                    poster_is_banned,
                     updated_at,
                     reply_status,
                 }

@@ -6,6 +6,7 @@ use crate::{
     },
     views::auth::{CurrentResponse, LoginResponse},
 };
+use sea_orm::Set;
 use time::Duration;
 use axum::debug_handler;
 use loco_rs::{environment, prelude::{cookie::*, *}};
@@ -35,6 +36,11 @@ pub struct ResetParams {
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MagicLinkParams {
     pub email: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct BanUserParams {
+    pub user_id: i32,
 }
 
 /// Register function creates a new user with the given parameters and sends a
@@ -195,6 +201,10 @@ async fn login(
         return unauthorized("unauthorized!");
     }
 
+    if user.is_banned {
+        return bad_request("Account has been banned!");
+    }
+
     let jwt_secret = ctx.config.get_jwt_config()?;
 
     let token = user
@@ -299,6 +309,29 @@ async fn magic_link_verify(
     format::json(LoginResponse::new(&user, &token))
 }
 
+/// Ban a user (moderator only)
+#[debug_handler]
+async fn ban_user(
+    auth: auth::JWT,
+    State(ctx): State<AppContext>,
+    Json(params): Json<BanUserParams>,
+) -> Result<Response> {
+    let current_user = users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    
+    if !current_user.is_moderator {
+        return unauthorized("Only moderators can ban users");
+    }
+
+    let target_user = users::Entity::find_by_id(params.user_id).one(&ctx.db).await?
+        .ok_or_else(|| Error::NotFound)?;
+    
+    let mut active_user: users::ActiveModel = target_user.into();
+    active_user.is_banned = Set(true);
+    active_user.update(&ctx.db).await?;
+
+    format::json(())
+}
+
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("/api/auth")
@@ -310,4 +343,5 @@ pub fn routes() -> Routes {
         .add("/current", get(current))
         .add("/magic-link", post(magic_link))
         .add("/magic-link/{token}", get(magic_link_verify))
+        .add("/ban", post(ban_user))
 }

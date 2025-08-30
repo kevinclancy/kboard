@@ -15,6 +15,7 @@ interface Reply {
   thread_id: number;
   poster: number;
   poster_username: string;
+  poster_is_banned: boolean;
   updated_at: string;
   reply_status: number;
 }
@@ -76,6 +77,34 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
       setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleBanUser = async (userId: number, username: string) => {
+    if (!window.confirm(`Are you sure you want to ban user "${username}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_ROOT}/auth/ban`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ user_id: userId })
+      });
+
+      if (response.ok) {
+        // Refresh the replies to show updated ban status
+        fetchReplies();
+      } else if (response.status === 401 || response.status === 403) {
+        onAuthenticationError();
+      } else {
+        console.error('Failed to ban user');
+      }
+    } catch (err) {
+      console.error('Network error:', err);
     }
   };
 
@@ -338,9 +367,28 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                   borderRadius="md"
                   minW="120px"
                 >
-                  <Text fontWeight="bold" color="blue.700">
-                    {reply.poster_username}
-                  </Text>
+                  <VStack align="start" gap={1}>
+                    <HStack align="center" gap={2}>
+                      <Text fontWeight="bold" color="blue.700">
+                        {reply.poster_username}
+                      </Text>
+                      {isCurrentUserModerator && (
+                        <Button 
+                          size="xs" 
+                          colorScheme="red" 
+                          variant="outline"
+                          onClick={() => handleBanUser(reply.poster, reply.poster_username)}
+                        >
+                          Ban
+                        </Button>
+                      )}
+                    </HStack>
+                    {reply.poster_is_banned && (
+                      <Text fontSize="xs" color="red.600" fontWeight="semibold">
+                        banned
+                      </Text>
+                    )}
+                  </VStack>
                 </Box>
 
                 {/* Right side - Posted date, reply-to, and body */}

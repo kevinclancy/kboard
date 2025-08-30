@@ -35,7 +35,17 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                 return;
             }
 
-            setMessage("Login failed.");
+            // Try to get specific error message from backend
+            try {
+                const errorData = await response.text();
+                if (errorData.includes("Account has been banned")) {
+                    setMessage("Your account has been banned and you cannot log in.");
+                } else {
+                    setMessage("Login failed. Please check your credentials.");
+                }
+            } catch {
+                setMessage("Login failed. Please check your credentials.");
+            }
         } catch (error) {
             setMessage("Network error. Please check your connection.");
         }

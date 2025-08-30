@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Box, Button, HStack, Separator, Stack } from "@chakra-ui/react";
+import { Box, Button, HStack, Separator, Stack, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
 import { RegisterForm } from "./RegisterForm";
@@ -57,7 +57,7 @@ export function KBoard({ uiState }: KBoardProps) {
     setAuthState({ type: "logged_in", username });
   };
 
-  const handleAuthenticationError = () => {
+  const logout = () => {
     Cookies.remove('username');
     Cookies.remove('jwt');
     setAuthState({ type: "logged_out" });
@@ -68,9 +68,9 @@ export function KBoard({ uiState }: KBoardProps) {
       case "board":
         return <BoardSelector />;
       case "discussion_board":
-        return <DiscussionBoard boardId={uiState.boardId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
+        return <DiscussionBoard boardId={uiState.boardId} authState={authState} onAuthenticationError={logout} />;
       case "thread_viewer":
-        return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} authState={authState} onAuthenticationError={handleAuthenticationError} />;
+        return <ThreadViewer boardId={uiState.boardId} threadId={uiState.threadId} authState={authState} onAuthenticationError={logout} />;
       case "about_me":
         return <AboutMe />;
       case "search":
@@ -98,18 +98,25 @@ export function KBoard({ uiState }: KBoardProps) {
           ) : (
             <Box />
           )}
+          <Text fontSize="3xl" fontWeight="bold" color="brown">
+            BrokenJaw.net
+          </Text>
           <HStack>
             <Link to="/boards">
               <Button bgColor="brown">
                 Discussion Boards
               </Button>
             </Link>
-            {authState.type === "logged_out" && (
+            {authState.type === "logged_out" ? (
               <Link to="/login">
                 <Button bgColor="brown">
                   Login
                 </Button>
               </Link>
+            ) : (
+              <Button bgColor="brown" onClick={logout}>
+                Logout
+              </Button>
             )}
             <Link to="/register">
               <Button bgColor="brown">Register</Button>

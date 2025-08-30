@@ -40,6 +40,18 @@ export function AboutMe() {
         over 20 years and had never tripped once; I believed that if I did trip, I would get a bit cut up, recover after a few weeks,
         and learn to be more careful. Well, that's not what happened; I broke bones and suffered permanent damage.
       </Text>
+      
+      <Box mb={4} display="flex" justifyContent="center">
+        <iframe
+          width="560"
+          height="315"
+          src="https://www.youtube.com/embed/2HrglL2vS9I"
+          title="Seagull Madness"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </Box>
+      
       <Text fontSize="md" color="gray.700" lineHeight="1.3">
         A year later, my wrist doesn't bother me too much, despite having been fixed with several titanium screws. It has
         lost a small amount of mobility in bending forward and backward, and it makes a quiet clicking sound when I bend it forward,
