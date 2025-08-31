@@ -28,7 +28,10 @@ impl AuthMailer {
                 locals: json!({
                   "name": user.name,
                   "verifyToken": user.email_verification_token,
-                  "domain": ctx.config.server.full_url()
+                  "domain": match ctx.config.server.host == "brokenjaw.net" {
+                    true => "brokenjaw.net".to_string(),
+                    false => ctx.config.server.full_url()
+                  }
                 }),
                 ..Default::default()
             },
@@ -52,7 +55,10 @@ impl AuthMailer {
                 locals: json!({
                   "name": user.name,
                   "resetToken": user.reset_token,
-                  "domain": ctx.config.server.full_url()
+                  "domain": match ctx.config.server.host == "brokenjaw.net" {
+                    true => "brokenjaw.net".to_string(),
+                    false => ctx.config.server.full_url()
+                  }
                 }),
                 ..Default::default()
             },
@@ -78,7 +84,10 @@ impl AuthMailer {
                   "token": user.magic_link_token.clone().ok_or_else(|| Error::string(
                             "the user model not contains magic link token",
                     ))?,
-                  "host": ctx.config.server.full_url()
+                  "host": match ctx.config.server.host == "brokenjaw.net" {
+                    true => "brokenjaw.net".to_string(),
+                    false => ctx.config.server.full_url()
+                  }
                 }),
                 ..Default::default()
             },
