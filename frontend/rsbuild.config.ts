@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [pluginReact()],
   html: {
     favicon: "src/assets/favicon.ico",
-    title: "KBoard Message Board",
+    title: "BrokenJaw.net",
   },
   server: {
     proxy: {
