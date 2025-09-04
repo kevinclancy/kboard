@@ -1,4 +1,5 @@
-use kboard::app::App;
+use insta::{assert_debug_snapshot, assert_yaml_snapshot};
+use kboard::{app::App, models::threads::Model as ThreadsModel};
 use loco_rs::testing::prelude::*;
 use serial_test::serial;
 
@@ -12,20 +13,25 @@ macro_rules! configure_insta {
 
 #[tokio::test]
 #[serial]
-async fn test_model() {
+async fn test_create() {
     configure_insta!();
 
     let boot = boot_test::<App>().await.unwrap();
-    let a = seed::<App>(&boot.app_context).await.unwrap();
+    seed::<App>(&boot.app_context).await.unwrap();
 
-    // query your model, e.g.:
-    //
-    // let item = models::posts::Model::find_by_pid(
-    //     &boot.app_context.db,
-    //     "11111111-1111-1111-1111-111111111111",
-    // )
-    // .await;
+    let thread = ThreadsModel::create(
+        &boot.app_context.db,
+        "Car crash.".to_string(),
+        1,
+        2,
+        "I got in a car crash and broke my jaw.".to_string()
+    ).await.unwrap();
 
-    // snapshot the result:
-    // assert_debug_snapshot!(item);
+    assert_yaml_snapshot!(thread,
+        {
+            ".created_at" => "2025-09-04T22:17:46Z",
+            ".updated_at" => "2025-09-04T22:17:46Z",
+            ".last_active" => "2025-09-04T22:17:46.190572"
+        }
+    );
 }

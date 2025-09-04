@@ -138,14 +138,4 @@ impl Entity {
 
         Ok(result)
     }
-
-    pub async fn count_by_board(
-        db: &DatabaseConnection,
-        board_id: i32,
-    ) -> Result<u64, DbErr> {
-        Self::find()
-            .filter(Column::BoardId.eq(board_id))
-            .count(db)
-            .await
-    }
 }

@@ -13,6 +13,7 @@ use loco_rs::{
 use migration::Migrator;
 use std::path::Path;
 
+use crate::models::{_entities::reply_statuses, boards, replies, threads};
 #[allow(unused_imports)]
 use crate::{controllers, models::_entities::users, tasks, workers::downloader::DownloadWorker};
 
@@ -67,6 +68,13 @@ impl Hooks for App {
     async fn seed(ctx: &AppContext, base: &Path) -> Result<()> {
         db::seed::<users::ActiveModel>(&ctx.db, &base.join("users.yaml").display().to_string())
             .await?;
+        db::seed::<boards::ActiveModel>(&ctx.db, &base.join("boards.yaml").display().to_string())
+            .await?;
+        db::seed::<threads::ActiveModel>(&ctx.db, &base.join("threads.yaml").display().to_string())
+            .await?;
+        db::seed::<replies::ActiveModel>(&ctx.db, &base.join("replies.yaml").display().to_string())
+             .await?;
+
         Ok(())
     }
 }

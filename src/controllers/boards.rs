@@ -1,4 +1,12 @@
-use crate::models::{boards::Model as Board, threads::Entity as ThreadEntity, threads::ThreadWithPosterName, threads::Model as Thread, replies::Entity as ReplyEntity, replies::Model as Reply};
+use crate::models::{
+    boards::Entity as BoardEntity,
+    boards::Model as Board,
+    threads::Entity as ThreadEntity,
+    threads::ThreadWithPosterName,
+    threads::Model as Thread,
+    replies::Entity as ReplyEntity,
+    replies::Model as Reply
+};
 use axum::{debug_handler, extract::Path, extract::Query, Json};
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -90,11 +98,11 @@ async fn get_threads(
     let page_number = params.page_number.unwrap_or(0);
 
     let threads = ThreadEntity::find_paginated(&ctx.db, board_id, page_size, page_number).await?;
-    let total_count = ThreadEntity::count_by_board(&ctx.db, board_id).await?;
+    let total_count = BoardEntity::find_by_id(board_id).one(&ctx.db).await?.unwrap().num_threads;
 
     let response = ThreadsResponse {
         threads,
-        total_count,
+        total_count: total_count.try_into().unwrap(),
     };
 
     format::json(response)

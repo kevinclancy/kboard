@@ -1,0 +1,16 @@
+---
+- id: 1
+  name: "live"
+  description: "The reply is posted and visible to all users."
+  created_at: "2023-11-12T12:34:56.789Z"
+  updated_at: "2023-11-12T12:34:56.789Z"
+- id: 2
+  name: "hidden"
+  description: "No evidence of the reply is visible to viewers."
+  created_at: "2023-11-12T12:34:56.789Z"
+  updated_at: "2023-11-12T12:34:56.789Z"
+- id: 3
+  name: "deleted"
+  description: "The reply is visible with the poster name, but its body is hidden by a 'reply deleted' message."
+  created_at: "2023-11-12T12:34:56.789Z"
+  updated_at: "2023-11-12T12:34:56.789Z"
