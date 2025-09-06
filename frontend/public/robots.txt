@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /login
+Disallow: /register
+Disallow: /about
+Disallow: /request_reset
+Allow: /
