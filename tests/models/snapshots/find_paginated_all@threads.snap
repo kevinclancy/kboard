@@ -1,0 +1,40 @@
+---
+source: tests/models/threads.rs
+expression: threads
+---
+- id: 3
+  title: Startled by a chihuahua.
+  description: I was startled by a chihuahua
+  board_id: 1
+  poster: 1
+  poster_username: user1
+  poster_is_banned: false
+  last_active: "2023-11-12T12:34:56.792"
+  num_replies: 1
+- id: 4
+  title: Startled by a moose.
+  description: I was startled by a moose
+  board_id: 1
+  poster: 2
+  poster_username: user2
+  poster_is_banned: false
+  last_active: "2023-11-12T12:34:56.791"
+  num_replies: 1
+- id: 2
+  title: Startled by a chipmunk.
+  description: I was startled by a chipmunk
+  board_id: 1
+  poster: 2
+  poster_username: user2
+  poster_is_banned: false
+  last_active: "2023-11-12T12:34:56.790"
+  num_replies: 1
+- id: 1
+  title: Startled by a seagull.
+  description: I was startled by a seagull
+  board_id: 1
+  poster: 1
+  poster_username: user1
+  poster_is_banned: false
+  last_active: "2023-11-12T12:34:56.789"
+  num_replies: 1

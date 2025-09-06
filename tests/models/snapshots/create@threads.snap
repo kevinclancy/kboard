@@ -1,0 +1,14 @@
+---
+source: tests/models/threads.rs
+expression: thread
+---
+created_at: "2025-09-04T22:17:46Z"
+updated_at: "2025-09-04T22:17:46Z"
+id: 5
+title: Car crash.
+description: ""
+board_id: 1
+poster: 2
+last_active: "2025-09-04T22:17:46.190572"
+num_replies: 1
+is_deleted: false

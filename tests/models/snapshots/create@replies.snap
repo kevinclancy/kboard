@@ -1,0 +1,12 @@
+---
+source: tests/models/replies.rs
+expression: reply
+---
+created_at: "2025-09-04T22:17:46Z"
+updated_at: "2025-09-04T22:17:46Z"
+id: 6
+body: "I've had some bad experiences with seagulls myself."
+reply_to: 1
+thread_id: 1
+poster: 2
+reply_status: 1
