@@ -1,5 +1,5 @@
 use insta::{assert_debug_snapshot};
-use kboard::{app::App, models::users};
+use kboard::{app::App, models::users, controllers::boards::RepliesResponse as RepliesResponse};
 use loco_rs::testing::prelude::*;
 use serial_test::serial;
 
@@ -86,6 +86,11 @@ async fn can_post_thread() {
         // now read the new thread and confirm it exists
         let response = request.get("/api/boards/1/threads/5/replies?page_size=1&page_number=0").await;
         assert_eq!(response.status_code(), 200);
+
+        // Check that the replies response contains one element with the expected body text
+        let replies_response: RepliesResponse = response.json();
+        assert_eq!(replies_response.replies.len(), 1);
+        assert_eq!(replies_response.replies[0].body, "The Pika's cry caught me off guard.");
     })
     .await;
 }

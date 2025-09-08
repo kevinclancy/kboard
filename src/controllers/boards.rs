@@ -23,12 +23,12 @@ struct RepliesQuery {
     page_number: Option<u64>,
 }
 
-#[derive(Serialize)]
-struct RepliesResponse {
-    replies: Vec<crate::models::replies::ReplyResponse>,
-    total_count: u64,
-    thread_title: String,
-    board_name: String,
+#[derive(Serialize, Deserialize)]
+pub struct RepliesResponse {
+    pub replies: Vec<crate::models::replies::ReplyResponse>,
+    pub total_count: u64,
+    pub thread_title: String,
+    pub board_name: String,
 }
 
 #[derive(Deserialize)]
