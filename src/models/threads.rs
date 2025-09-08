@@ -3,8 +3,10 @@ use sea_orm::{QueryFilter, QueryOrder, QuerySelect, Set, TransactionTrait, JoinT
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 pub use super::_entities::threads::{ActiveModel, Model, Entity, Column};
+use crate::models::replies::Entity as ReplyEntity;
 use crate::models::{boards, replies, users};
 pub type Threads = Entity;
+use loco_rs::prelude::*;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ThreadWithPosterName {
@@ -43,34 +45,31 @@ impl Model {
         board_id: i32,
         poster_id: i32,
         initial_reply_text: String,
-    ) -> Result<Model, DbErr> {
+    ) -> Result<Model> {
         let txn = db.begin().await?;
 
-        // Create the thread
         let now = Utc::now();
         let thread = ActiveModel {
             title: Set(title),
-            description: Set(String::new()), // Empty description for now
+            description: Set(String::new()),
             board_id: Set(board_id),
             poster: Set(poster_id),
             last_active: Set(now.naive_utc()),
-            num_replies: Set(1), // Starting with 1 for the initial reply
+            num_replies: Set(1),
             ..Default::default()
         };
 
         let thread = thread.insert(&txn).await?;
 
-        // Create the initial reply
         let reply = replies::ActiveModel {
             body: Set(initial_reply_text),
             thread_id: Set(thread.id),
-            reply_to: Set(None), // 0 indicates it's a top-level reply
+            reply_to: Set(None),
             poster: Set(poster_id),
             ..Default::default()
         };
         reply.insert(&txn).await?;
 
-        // Increment the board's thread count
         let board = boards::Entity::find_by_id(board_id)
             .one(&txn)
             .await?
@@ -84,12 +83,47 @@ impl Model {
 
         Ok(thread)
     }
+
+    pub async fn delete(
+        db: &DatabaseConnection,
+        board_id: i32,
+        thread_id: i32
+    ) -> Result<()> {
+        let txn = db.begin().await?;
+
+        let thread = crate::models::threads::Entity::find_by_id(thread_id)
+            .one(&txn)
+            .await?;
+
+        let thread = thread.ok_or(loco_rs::Error::NotFound)?;
+
+        ReplyEntity::delete_many()
+            .filter(crate::models::replies::Column::ThreadId.eq(thread_id))
+            .exec(&txn)
+            .await?;
+
+        thread.delete(&txn).await?;
+
+        let board = boards::Entity::find_by_id(board_id)
+            .one(&txn)
+            .await?
+            .ok_or(DbErr::RecordNotFound("Board not found".to_string()))?;
+
+        let mut board: boards::ActiveModel = board.into();
+        board.num_threads = Set(board.num_threads.unwrap() - 1);
+        board.update(&txn).await?;
+
+        txn.commit().await?;
+
+        Ok(())
+    }
 }
 
 // implement your write-oriented logic here
-impl ActiveModel { }
+impl ActiveModel {
 
-// implement your custom finders, selectors oriented logic here
+}
+
 impl Entity {
     pub async fn find_paginated(
         db: &DatabaseConnection,

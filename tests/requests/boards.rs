@@ -1,5 +1,10 @@
 use insta::{assert_debug_snapshot};
-use kboard::{app::App, models::users, controllers::boards::RepliesResponse as RepliesResponse};
+use kboard::{
+    app::App,
+    models::users,
+    controllers::boards::RepliesResponse as RepliesResponse,
+    controllers::boards::ThreadsResponse as ThreadsResponse
+};
 use loco_rs::testing::prelude::*;
 use serial_test::serial;
 
@@ -83,11 +88,9 @@ async fn can_post_thread() {
         let response_text = response.text();
         assert_debug_snapshot!(response_text);
 
-        // now read the new thread and confirm it exists
         let response = request.get("/api/boards/1/threads/5/replies?page_size=1&page_number=0").await;
         assert_eq!(response.status_code(), 200);
 
-        // Check that the replies response contains one element with the expected body text
         let replies_response: RepliesResponse = response.json();
         assert_eq!(replies_response.replies.len(), 1);
         assert_eq!(replies_response.replies[0].body, "The Pika's cry caught me off guard.");
@@ -95,3 +98,35 @@ async fn can_post_thread() {
     .await;
 }
 
+#[tokio::test]
+#[serial]
+async fn can_delete_thread() {
+    configure_insta!();
+
+    request::<App, _, _>(|request, ctx| async move {
+        seed::<App>(&ctx).await.unwrap();
+
+        // Get user1 from fixtures and generate JWT token
+        let user1 = users::Model::find_by_pid(&ctx.db, "11111111-1111-1111-1111-111111111111").await.unwrap();
+        let jwt_secret = ctx.config.get_jwt_config().unwrap();
+        let token = user1
+            .generate_jwt(&jwt_secret.secret, jwt_secret.expiration)
+            .unwrap();
+
+        let del_response = request
+            .delete("/api/boards/1/threads/1")
+            .add_header("authorization", format!("Bearer {}", token))
+            .await;
+
+        assert_eq!(del_response.status_code(), 200);
+
+
+        let get_response = request.get("/api/boards/1/threads").await;
+        assert_eq!(get_response.status_code(), 200);
+        assert_debug_snapshot!(get_response.text());
+
+        let threads_response: ThreadsResponse = get_response.json();
+        assert!(threads_response.threads.iter().find(|t| (t.id == 1)).is_none());
+    })
+    .await;
+}

@@ -1,5 +1,5 @@
 use sea_orm::entity::prelude::*;
-use sea_orm::{QueryFilter, QueryOrder, QuerySelect, JoinType};
+use sea_orm::{JoinType, QueryFilter, QueryOrder, QuerySelect, TransactionTrait};
 use serde::{Deserialize, Serialize};
 pub use super::_entities::replies::{ActiveModel, Model, Entity, Column};
 use crate::models::users;

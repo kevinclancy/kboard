@@ -3,7 +3,7 @@ use crate::models::{
     boards::Model as Board,
     threads::Entity as ThreadEntity,
     threads::ThreadWithPosterName,
-    threads::Model as Thread,
+    threads::Model as ThreadModel,
     replies::Entity as ReplyEntity,
     replies::Model as Reply
 };
@@ -74,10 +74,10 @@ struct DeleteReplyRequest {
     action: String, // "delete" or "hide"
 }
 
-#[derive(Serialize)]
-struct ThreadsResponse {
-    threads: Vec<ThreadWithPosterName>,
-    total_count: u64,
+#[derive(Serialize, Deserialize)]
+pub struct ThreadsResponse {
+    pub threads: Vec<ThreadWithPosterName>,
+    pub total_count: u64,
 }
 
 /// Get all boards
@@ -152,7 +152,7 @@ async fn create_thread(
 ) -> Result<Response> {
     let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
 
-    let thread = Thread::create(
+    let thread = ThreadModel::create(
         &ctx.db,
         req.title,
         board_id,
@@ -165,6 +165,20 @@ async fn create_thread(
     };
 
     format::json(response)
+}
+
+#[debug_handler]
+pub async fn delete_thread(
+    auth: auth::JWT,
+    Path((board_id, thread_id)): Path<(i32, i32)>,
+    State(ctx): State<AppContext>,
+) -> Result<Response> {
+    let user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
+    if !user.is_moderator {
+        return Err(loco_rs::Error::Unauthorized("You can only delete your own threads unless you are a moderator".to_string()));
+    }
+    ThreadModel::delete(&ctx.db, board_id, thread_id).await?;
+    format::json(serde_json::json!({"success": true}))
 }
 
 /// Create a new reply in a thread
@@ -298,35 +312,6 @@ pub async fn find_reply_page(
     let page_number = replies_before / query.page_size;
 
     Ok(Json(FindReplyPageResponse { page_number }))
-}
-
-#[debug_handler]
-pub async fn delete_thread(
-    auth: auth::JWT,
-    Path((_board_id, thread_id)): Path<(i32, i32)>,
-    State(ctx): State<AppContext>,
-) -> Result<Response> {
-    use sea_orm::{EntityTrait, ModelTrait, QueryFilter, ColumnTrait};
-
-    let thread = crate::models::threads::Entity::find_by_id(thread_id)
-        .one(&ctx.db)
-        .await?;
-
-    let thread = thread.ok_or(loco_rs::Error::NotFound)?;
-
-    let current_user = crate::models::users::Model::find_by_pid(&ctx.db, &auth.claims.pid).await?;
-    if !current_user.is_moderator {
-        return Err(loco_rs::Error::Unauthorized("You can only delete your own threads unless you are a moderator".to_string()));
-    }
-
-    ReplyEntity::delete_many()
-        .filter(crate::models::replies::Column::ThreadId.eq(thread_id))
-        .exec(&ctx.db)
-        .await?;
-
-    thread.delete(&ctx.db).await?;
-
-    format::json(serde_json::json!({"success": true}))
 }
 
 pub fn routes() -> Routes {
