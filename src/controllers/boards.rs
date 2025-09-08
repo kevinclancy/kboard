@@ -42,10 +42,10 @@ struct CreateThreadResponse {
     thread_id: i32,
 }
 
-#[derive(Deserialize)]
-struct CreateReplyRequest {
-    body: String,
-    reply_to: Option<i32>,
+#[derive(Serialize, Deserialize)]
+pub struct CreateReplyRequest {
+    pub body: String,
+    pub reply_to: Option<i32>,
 }
 
 #[derive(Serialize)]

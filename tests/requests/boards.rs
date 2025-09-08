@@ -1,9 +1,6 @@
 use insta::{assert_debug_snapshot};
 use kboard::{
-    app::App,
-    models::users,
-    controllers::boards::RepliesResponse as RepliesResponse,
-    controllers::boards::ThreadsResponse as ThreadsResponse
+    app::App, controllers::boards::{CreateReplyRequest, RepliesResponse as RepliesResponse, ThreadsResponse as ThreadsResponse}, models::users
 };
 use loco_rs::testing::prelude::*;
 use serial_test::serial;
@@ -120,13 +117,71 @@ async fn can_delete_thread() {
 
         assert_eq!(del_response.status_code(), 200);
 
-
         let get_response = request.get("/api/boards/1/threads").await;
         assert_eq!(get_response.status_code(), 200);
         assert_debug_snapshot!(get_response.text());
 
         let threads_response: ThreadsResponse = get_response.json();
         assert!(threads_response.threads.iter().find(|t| (t.id == 1)).is_none());
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn can_get_replies() {
+    configure_insta!();
+
+    request::<App, _, _>(|request, ctx| async move {
+        seed::<App>(&ctx).await.unwrap();
+        let response = request.get("/api/boards/1/threads/1/replies").await;
+        assert_eq!(
+            response.status_code(),
+            200,
+            "Replies request should succeed"
+        );
+
+        assert_debug_snapshot!(response.text());
+    })
+    .await;
+}
+
+#[tokio::test]
+#[serial]
+async fn can_post_reply() {
+    configure_insta!();
+
+    let payload = CreateReplyRequest {
+        body: "Ya. That sounds bad.".to_string(),
+        reply_to: Some(1),
+    };
+
+    request::<App, _, _>(|request, ctx| async move {
+        seed::<App>(&ctx).await.unwrap();
+
+        // Get user1 from fixtures and generate JWT token
+        let user1 = users::Model::find_by_pid(&ctx.db, "11111111-1111-1111-1111-111111111111").await.unwrap();
+        let jwt_secret = ctx.config.get_jwt_config().unwrap();
+        let token = user1
+            .generate_jwt(&jwt_secret.secret, jwt_secret.expiration)
+            .unwrap();
+
+        let response = request
+            .post("/api/boards/1/threads/1/replies")
+            .add_header("authorization", format!("Bearer {}", token))
+            .json(&payload)
+            .await;
+
+        assert_eq!(response.status_code(), 200);
+
+        let response_text = response.text();
+        assert_debug_snapshot!(response_text);
+
+        let response = request.get("/api/boards/1/threads/1/replies?page_size=10&page_number=0").await;
+        assert_eq!(response.status_code(), 200);
+
+        let replies_response: RepliesResponse = response.json();
+        assert_eq!(replies_response.replies.last().unwrap().body, payload.body);
     })
     .await;
 }

@@ -1,5 +1,5 @@
 use sea_orm::entity::prelude::*;
-use sea_orm::{JoinType, QueryFilter, QueryOrder, QuerySelect, TransactionTrait};
+use sea_orm::{DatabaseTransaction, JoinType, QueryFilter, QueryOrder, QuerySelect, TransactionTrait};
 use serde::{Deserialize, Serialize};
 pub use super::_entities::replies::{ActiveModel, Model, Entity, Column};
 use crate::models::users;
@@ -37,6 +37,13 @@ impl ActiveModelBehavior for ActiveModel {
 
 // implement your read-oriented logic here
 impl Model {
+    /// # Parameters
+    ///
+    /// * db - current database connection
+    /// * body - the text contained in the new reply
+    /// * thread_id - id of the thread that this reply is inside
+    /// * poster - id of the poster that created this reply
+    /// * reply_to - Optional id of a reply that this reply is responding to
     pub async fn create(
         db: &DatabaseConnection,
         body: String,
@@ -44,6 +51,8 @@ impl Model {
         poster: i32,
         reply_to: Option<i32>,
     ) -> Result<Self, DbErr> {
+        let txn = db.begin().await?;
+
         let reply = ActiveModel {
             body: sea_orm::ActiveValue::Set(body),
             thread_id: sea_orm::ActiveValue::Set(thread_id),
@@ -52,7 +61,7 @@ impl Model {
             ..Default::default()
         };
 
-        let result = reply.insert(db).await?;
+        let result = reply.insert(&txn).await?;
 
         // Update thread num_replies count
         use crate::models::threads::{Entity as ThreadEntity, Column as ThreadColumn};
@@ -60,13 +69,15 @@ impl Model {
 
         let thread = ThreadEntity::find()
             .filter(ThreadColumn::Id.eq(thread_id))
-            .one(db)
+            .one(&txn)
             .await?
             .ok_or_else(|| DbErr::RecordNotFound("Thread not found".to_string()))?;
 
         let mut thread_active: crate::models::threads::ActiveModel = thread.into();
         thread_active.num_replies = Set(thread_active.num_replies.unwrap() + 1);
-        thread_active.update(db).await?;
+        thread_active.update(&txn).await?;
+
+        txn.commit().await?;
 
         Ok(result)
     }
