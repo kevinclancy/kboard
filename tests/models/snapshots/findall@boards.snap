@@ -10,7 +10,7 @@ Ok(
             id: 1,
             title: "Broken Jaw Stories",
             description: "Tell about the time you broke your jaw.",
-            num_threads: 1,
+            num_threads: 4,
         },
     ],
 )

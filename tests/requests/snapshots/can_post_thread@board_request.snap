@@ -1,0 +1,5 @@
+---
+source: tests/requests/boards.rs
+expression: response.text()
+---
+"{\"thread_id\":5}"

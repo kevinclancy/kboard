@@ -2,7 +2,7 @@
 - id: 1
   title: "Broken Jaw Stories"
   description: "Tell about the time you broke your jaw."
-  num_threads: 1
+  num_threads: 4
   created_at: "2023-11-12T12:34:56.789Z"
   updated_at: "2023-11-12T12:34:56.789Z"
 

@@ -19,7 +19,7 @@ Ok(
         email_verified_at: None,
         magic_link_token: None,
         magic_link_expiration: None,
-        is_moderator: false,
+        is_moderator: true,
         is_banned: false,
     },
 )
