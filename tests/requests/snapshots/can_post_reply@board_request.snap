@@ -1,0 +1,5 @@
+---
+source: tests/requests/boards.rs
+expression: response_text
+---
+"{\"reply_id\":6}"

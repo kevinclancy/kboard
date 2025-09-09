@@ -1,0 +1,5 @@
+---
+source: tests/requests/boards.rs
+expression: response.text()
+---
+"{\"replies\":[{\"id\":1,\"body\":\"I was runnning. A seagull startled me, and then I fell on my face.\",\"reply_to\":null,\"thread_id\":1,\"poster\":1,\"poster_username\":\"user1\",\"poster_is_banned\":false,\"updated_at\":\"2023-11-12T12:34:56.789Z\",\"reply_status\":1},{\"id\":5,\"body\":\"Oh wow. That's terrible!\",\"reply_to\":[1,\"I was runnning. A seagull startled me, and then I fell on my face.\",1],\"thread_id\":1,\"poster\":2,\"poster_username\":\"user2\",\"poster_is_banned\":false,\"updated_at\":\"2023-11-12T12:34:56.790Z\",\"reply_status\":1}],\"total_count\":1,\"thread_title\":\"Startled by a seagull.\",\"board_name\":\"Broken Jaw Stories\"}"
