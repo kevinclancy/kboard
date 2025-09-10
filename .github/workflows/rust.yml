@@ -57,6 +57,7 @@ jobs:
         cp target/x86_64-unknown-linux-musl/release/kboard-cli deploy/
         cp -r config deploy/
         cp -r frontend/dist/ deploy/frontend/
+        echo "nohup ./kboard-cli start --environment production"
         tar -czf deployment.tar.gz -C deploy .
 
     - name: Upload build artifact
