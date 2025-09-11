@@ -12,6 +12,7 @@ import { NewPasswordForm } from "./NewPasswordForm";
 import { VerifyEmail } from "./VerifyEmail";
 import { AboutMe } from "./AboutMe";
 import { SearchResults } from "./SearchResults";
+import { Profile } from "./Profile";
 
 export type AuthState =
   // User is not authenticated
@@ -39,7 +40,9 @@ export type UIState =
   // New password with key is displayed
   | { type: "new_password" }
   // Email verification is displayed
-  | { type: "verify_email"; verifyToken: string };
+  | { type: "verify_email"; verifyToken: string }
+  // User profile form is displayed
+  | { type: "profile" };
 
 interface KBoardProps {
   uiState: UIState;
@@ -55,6 +58,10 @@ export function KBoard({ uiState }: KBoardProps) {
 
   const handleLogin = (token: string, username: string) => {
     setAuthState({ type: "logged_in", username });
+  };
+
+  const handleUsernameUpdate = (newUsername: string) => {
+    setAuthState({ type: "logged_in", username: newUsername });
   };
 
   const logout = () => {
@@ -86,6 +93,8 @@ export function KBoard({ uiState }: KBoardProps) {
         return <NewPasswordForm resetKey={resetKey} />;
       case "verify_email":
         return <VerifyEmail verifyToken={uiState.verifyToken} login={handleLogin} />;
+      case "profile":
+        return <Profile authState={authState} onAuthenticationError={logout} onUsernameUpdate={handleUsernameUpdate} />;
     }
   })();
 
@@ -114,9 +123,16 @@ export function KBoard({ uiState }: KBoardProps) {
                 </Button>
               </Link>
             ) : (
-              <Button bgColor="brown" onClick={logout}>
-                Logout
-              </Button>
+              <>
+                <Link to="/profile">
+                  <Button bgColor="brown">
+                    Profile
+                  </Button>
+                </Link>
+                <Button bgColor="brown" onClick={logout}>
+                  Logout
+                </Button>
+              </>
             )}
             <Link to="/register">
               <Button bgColor="brown">Register</Button>

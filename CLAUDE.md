@@ -80,6 +80,23 @@ if (reply.reply_to) {
 const isReplyToHidden = (reply: Reply): boolean => reply.reply_to && reply.reply_to[2] === 2;
 ```
 
+## Code Style
+
+### Avoid Unnecessary Intermediate Variables
+- Don't create variables for simple boolean expressions that are used only once
+- Use conditions directly in their usage context to reduce indirection
+- Intermediate variables force readers to trace definitions while reading code
+
+Example:
+```typescript
+// Avoid: Unnecessary intermediate variable creates indirection
+const isNameValid = nameValidation.type === "valid";
+return <Button disabled={!isNameValid} />;
+
+// Preferred: Use condition directly
+return <Button disabled={nameValidation.type !== "valid"} />;
+```
+
 ## General Principles
 
 - Prioritize type safety and clear state management

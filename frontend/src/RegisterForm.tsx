@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { PasswordInput } from "./components/ui/password-input";
 import { Field } from "./components/ui/field";
 import { API_ROOT } from "./config";
+import { validateName, validatePassword, getNameValidationMessage } from "./validation";
 
 export function RegisterForm() {
     const [username, setUsername] = useState("");
@@ -12,39 +13,19 @@ export function RegisterForm() {
     const [registerSucceeded, setRegisterSucceeded] = useState(false);
     const [message, setMessage] = useState("Welcome! Please fill out the registration form. We recommend against reusing an existing password.");
 
-    const validatePassword = (password: string): string[] => {
-        const errors: string[] = [];
-        
-        if (password.length < 8) {
-            errors.push("At least 8 characters");
-        }
-        
-        if (!/[a-zA-Z]/.test(password)) {
-            errors.push("At least one letter");
-        }
-        
-        if (!/\d/.test(password)) {
-            errors.push("At least one digit");
-        }
-        
-        if (!/[^\w\s]/.test(password)) {
-            errors.push("At least one punctuation mark");
-        }
-        
-        return errors;
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (username.length < 2 || username.length > 38) {
-            setMessage("Username must be between 2 and 38 characters long.");
+        const nameValidation = validateName(username);
+        if (nameValidation.type === "invalid") {
+            setMessage(nameValidation.errors.join(", "));
             return;
         }
 
-        const passwordErrors = validatePassword(password);
-        if (passwordErrors.length > 0) {
-            setMessage(`Password requirements: ${passwordErrors.join(", ")}.`);
+        const passwordValidation = validatePassword(password);
+        if (passwordValidation.type === "invalid") {
+            setMessage(`Password requirements: ${passwordValidation.errors.join(", ")}.`);
             return;
         }
 
@@ -98,7 +79,7 @@ export function RegisterForm() {
                   maxLength={38}
                 />
                 <Text fontSize="sm" color="gray.600" mt={1}>
-                  {username.length}/38 characters {username.length < 2 || username.length > 38 ? "(Invalid length)" : ""}
+                  {getNameValidationMessage(username)}
                 </Text>
               </Field.Root>
 

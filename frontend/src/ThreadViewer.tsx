@@ -256,10 +256,10 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
         <Breadcrumb.Root mb={4} fontSize="xl">
           <Breadcrumb.List>
             <Breadcrumb.Item>
-              <Link to={`/boards/${boardId}/threads`} style={{ textDecoration: 'none' }}>
-                <Breadcrumb.Link fontSize="xl" fontWeight="semibold">
+              <Link to={`/boards/${boardId}/threads`}>
+                <Text fontSize="xl" fontWeight="semibold" color="blue.500" _hover={{ textDecoration: "underline" }}>
                   {boardName}
-                </Breadcrumb.Link>
+                </Text>
               </Link>
             </Breadcrumb.Item>
             <Breadcrumb.Separator />

@@ -85,6 +85,7 @@ ReactDOM.createRoot(root).render(
           <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
           <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />
           <Route path="/verify/:verifyToken" element={<VerifyEmailPage />} />
+          <Route path="/profile" element={<KBoard uiState={{ type: "profile" }} />} />
           <Route path="*" element={<KBoard uiState={{ type: "board" }} />} />
         </Routes>
       </ChakraProvider>
