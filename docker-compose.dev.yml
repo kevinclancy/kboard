@@ -1,0 +1,32 @@
+# Development docker-compose - builds images locally
+version: '3.8'
+
+services:
+  webserver:
+    build: .
+    command: ["./kboard-cli", "start", "--environment", "development"]
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MAIL_APP_PWD=${MAIL_APP_PWD}
+    volumes:
+      - webserver_data:/data
+    networks:
+      - kboard_network
+
+  nginx:
+    build: nginx/
+    volumes:
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    depends_on:
+      - webserver
+    networks:
+      - kboard_network
+
+volumes:
+  webserver_data:
+
+networks:
+  kboard_network:
+    driver: bridge

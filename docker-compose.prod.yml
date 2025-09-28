@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  webserver:
+    image: ${DOCKER_REGISTRY}/kboard:${IMAGE_TAG:-latest}
+    command: ["./kboard-cli", "start", "--environment", "production"]
+    environment:
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - MAIL_APP_PWD=${MAIL_APP_PWD}
+    volumes:
+      - webserver_data:/data
+    networks:
+      - kboard_network
+    restart: unless-stopped
+
+  nginx:
+    image: ${DOCKER_REGISTRY}/kboard-nginx:${IMAGE_TAG:-latest}
+    ports:
+      - "443:443"
+    depends_on:
+      - webserver
+    networks:
+      - kboard_network
+    restart: unless-stopped
+
+volumes:
+  webserver_data:
+
+networks:
+  kboard_network:
+    driver: bridge
