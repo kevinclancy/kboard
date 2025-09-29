@@ -8,10 +8,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -50,18 +50,50 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-    - name: Create deployment package
-      run: |
-        mkdir deploy
-        mkdir -p deploy/frontend/
-        cp target/x86_64-unknown-linux-musl/release/kboard-cli deploy/
-        cp -r config deploy/
-        cp -r frontend/dist/ deploy/frontend/
-        echo "nohup ./kboard-cli start --environment production"
-        tar -czf deployment.tar.gz -C deploy .
-
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v4
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
       with:
-        name: deployment-package
-        path: deployment.tar.gz
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+    - name: Build and push Docker images
+      run: |
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kboard:${{ env.IMAGE_TAG }} -f Dockerfile.prod .
+        docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kboard-nginx:${{ env.IMAGE_TAG }} -f nginx/Dockerfile.prod .
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/kboard:${{ env.IMAGE_TAG }}
+        docker push ${{ secrets.DOCKERHUB_USERNAME }}/kboard-nginx:${{ env.IMAGE_TAG }}
+
+  deploy:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to EC2
+      env:
+        EC2_HOST: ${{ secrets.EC2_HOST }}
+        EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+        MAIL_APP_PWD: ${{ secrets.MAIL_APP_PWD }}
+      run: |
+        echo "$EC2_SSH_KEY" > private_key.pem
+        chmod 600 private_key.pem
+
+        scp -o StrictHostKeyChecking=no -i private_key.pem docker-compose.prod.yml $EC2_USERNAME@$EC2_HOST:~/
+
+        ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USERNAME@$EC2_HOST << 'EOF'
+          export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
+          export IMAGE_TAG=${{ github.sha }}
+          export JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          export MAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}
+
+          docker compose -f docker-compose.prod.yml pull
+          docker compose -f docker-compose.prod.yml up -d
+          docker system prune -af
+        EOF
+
+        rm private_key.pem
