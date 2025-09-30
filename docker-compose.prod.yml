@@ -17,6 +17,8 @@ services:
     image: ${DOCKER_REGISTRY}/kboard-nginx:${IMAGE_TAG:-latest}
     ports:
       - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - webserver
     networks:
