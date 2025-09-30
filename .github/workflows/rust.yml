@@ -58,29 +58,30 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Deploy to EC2
-      env:
-        EC2_HOST: ${{ secrets.EC2_HOST }}
-        EC2_USERNAME: ${{ secrets.EC2_USERNAME }}
-        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
-        MAIL_APP_PWD: ${{ secrets.MAIL_APP_PWD }}
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Copy docker-compose to EC2
       run: |
-        echo "$EC2_SSH_KEY" > private_key.pem
-        chmod 600 private_key.pem
+        aws s3 cp docker-compose.prod.yml s3://${{ secrets.DEPLOYMENT_BUCKET }}/docker-compose.prod.yml
 
-        scp -o StrictHostKeyChecking=no -i private_key.pem docker-compose.prod.yml $EC2_USERNAME@$EC2_HOST:~/
-
-        ssh -o StrictHostKeyChecking=no -i private_key.pem $EC2_USERNAME@$EC2_HOST << 'EOF'
-          export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}
-          export IMAGE_TAG=${{ github.sha }}
-          export JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-          export MAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}
-
-          docker compose -f docker-compose.prod.yml pull
-          docker compose -f docker-compose.prod.yml up -d
-          docker system prune -af
-        EOF
-
-        rm private_key.pem
+    - name: Deploy to EC2 via SSM
+      run: |
+        aws ssm send-command \
+          --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+          --document-name "AWS-RunShellScript" \
+          --parameters 'commands=[
+            "aws s3 cp s3://${{ secrets.DEPLOYMENT_BUCKET }}/docker-compose.prod.yml ~/docker-compose.prod.yml",
+            "export DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}",
+            "export IMAGE_TAG=${{ github.sha }}",
+            "export JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}",
+            "export MAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}",
+            "docker compose -f ~/docker-compose.prod.yml pull",
+            "docker compose -f ~/docker-compose.prod.yml up -d",
+            "docker system prune -af"
+          ]' \
+          --output text
