@@ -3,7 +3,7 @@ version: '3.8'
 services:
   webserver:
     image: ${DOCKER_REGISTRY}/kboard:${IMAGE_TAG:-latest}
-    command: ["./kboard-cli", "start", "--environment", "production"]
+    command: ["./kboard-cli", "start", "--environment", "production", "--all"]
     environment:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - MAIL_APP_PWD=${MAIL_APP_PWD}

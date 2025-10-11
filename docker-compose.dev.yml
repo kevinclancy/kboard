@@ -4,7 +4,7 @@ version: '3.8'
 services:
   webserver:
     build: .
-    command: ["./kboard-cli", "start", "--environment", "development"]
+    command: ["./kboard-cli", "start", "--environment", "development", "--all"]
     environment:
       - JWT_SECRET_KEY=${JWT_SECRET_KEY}
       - MAIL_APP_PWD=${MAIL_APP_PWD}
@@ -12,11 +12,13 @@ services:
       - webserver_data:/data
     networks:
       - kboard_network
+    tty: false
+    stdin_open: false
 
   nginx:
     build: nginx/
     volumes:
-      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf
+      - ./nginx/nginx.dev.conf:/etc/nginx/nginx.conf:ro
     ports:
       - "80:80"
     depends_on:

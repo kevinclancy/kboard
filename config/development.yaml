@@ -56,7 +56,7 @@ workers:
   #   - BackgroundQueue - Workers operate asynchronously in the background, processing queued.
   #   - ForegroundBlocking - Workers operate in the foreground and block until tasks are completed.
   #   - BackgroundAsync - Workers operate asynchronously in the background, processing tasks with async capabilities.
-  mode: BackgroundAsync
+  mode: ForegroundBlocking
 
 
 
@@ -117,3 +117,11 @@ auth:
     location:
       from: Cookie
       name: jwt
+
+scheduler:
+  # A list of jobs to be scheduled.
+  jobs:
+    run_task:
+      run: "activity_report"
+      schedule: "at 10:00 am"
+      run_on_start: true

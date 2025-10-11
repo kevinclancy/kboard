@@ -31,19 +31,19 @@ fn validate_password(password: &str) -> Result<(), validator::ValidationError> {
     if password.len() < 8 {
         return Err(validator::ValidationError::new("Password must be at least 8 characters long."));
     }
-    
+
     if !password.chars().any(|c| c.is_alphabetic()) {
         return Err(validator::ValidationError::new("Password must contain at least one letter."));
     }
-    
+
     if !password.chars().any(|c| c.is_ascii_digit()) {
         return Err(validator::ValidationError::new("Password must contain at least one digit."));
     }
-    
+
     if !password.chars().any(|c| c.is_ascii_punctuation()) {
         return Err(validator::ValidationError::new("Password must contain at least one punctuation mark."));
     }
-    
+
     Ok(())
 }
 
@@ -249,7 +249,7 @@ impl Model {
     ) -> ModelResult<Self> {
         // Validate the registration parameters
         params.validate().map_err(|e| ModelError::Any(e.into()))?;
-        
+
         let txn = db.begin().await?;
 
         if users::Entity::find()
@@ -392,5 +392,33 @@ impl ActiveModel {
         self.magic_link_token = ActiveValue::set(None);
         self.magic_link_expiration = ActiveValue::set(None);
         self.update(db).await.map_err(ModelError::from)
+    }
+}
+
+impl Entity {
+    /// Counts users created yesterday (previous calendar day)
+    pub async fn count_created_yesterday(db: &DatabaseConnection) -> ModelResult<u64> {
+        use sea_orm::PaginatorTrait;
+
+        let yesterday_start = Local::now()
+            .date_naive()
+            .pred_opt().unwrap()
+            .and_hms_opt(0, 0, 0).unwrap();
+
+        let yesterday_end = Local::now()
+            .date_naive()
+            .pred_opt().unwrap()
+            .and_hms_opt(23, 59, 59).unwrap();
+
+        let count = users::Entity::find()
+            .filter(
+                model::query::condition()
+                    .gte(users::Column::CreatedAt, yesterday_start)
+                    .lte(users::Column::CreatedAt, yesterday_end)
+                    .build()
+            )
+            .count(db)
+            .await?;
+        Ok(count)
     }
 }
