@@ -45,6 +45,8 @@ jobs:
 
     - name: Build and push Docker images
       run: |
+        cd $GITHUB_WORKSPACE
+        pwd
         ls -la
         ls -la config/
         ls -la frontend/dist/

@@ -34,8 +34,7 @@ RUN mkdir -p /webserver/config /data
 
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/kboard-cli /webserver/kboard-cli
 COPY frontend/dist /webserver/frontend/dist
-
-COPY config/ /webserver/config/
+COPY config /webserver/config
 
 WORKDIR /webserver
 
