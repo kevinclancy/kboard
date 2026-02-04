@@ -40,7 +40,7 @@ export function AboutMe() {
         over 20 years and had never tripped once; I believed that if I did trip, I would get a bit cut up, recover after a few weeks,
         and learn to be more careful. Well, that's not what happened; I broke bones and suffered permanent damage.
       </Text>
-      
+
       <Box mb={4} display="flex" justifyContent="center">
         <iframe
           width="560"
@@ -51,15 +51,14 @@ export function AboutMe() {
           allowFullScreen
         />
       </Box>
-      
+
       <Text fontSize="md" color="gray.700" lineHeight="1.3">
         A year later, my wrist doesn't bother me too much, despite having been fixed with several titanium screws. It has
         lost a small amount of mobility in bending forward and backward, and it makes a quiet clicking sound when I bend it forward,
         but it feels just as good as my pristine wrist in resting position. My jaw injury, on the other hand, was much more significant
         psychologically. For one thing, it altered my appearance, making my face slightly asymmetric. More importantly,
-        my jaw has a constant "off balance" and mildly fatigued sensation that changes how I experience everything. It's only
-        been a year, so I think it's still healing. I want to discuss this experience with others who have broken their jaws.
-        That's why I created this site.
+        my jaw had a constant "off balance" and mildly fatigued sensation for over a year. Fortunately, I've fully recovered.
+        I want to discuss this experience with others who have broken their jaws. That's why I created this site.
       </Text>
 
       <Text fontSize="2xl" fontWeight="bold" mb={4} mt={8}>
