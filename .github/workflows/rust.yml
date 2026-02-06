@@ -46,10 +46,6 @@ jobs:
     - name: Build and push Docker images
       run: |
         cd $GITHUB_WORKSPACE
-        pwd
-        ls -la
-        ls -la config/
-        ls -la frontend/dist/
         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kboard:${{ env.IMAGE_TAG }} .
         docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/kboard-nginx:${{ env.IMAGE_TAG }} nginx/
         docker push ${{ secrets.DOCKERHUB_USERNAME }}/kboard:${{ env.IMAGE_TAG }}
