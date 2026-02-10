@@ -82,6 +82,8 @@ jobs:
             "export IMAGE_TAG=\"${{ github.sha }}\"",
             "export JWT_SECRET_KEY=\"${{ secrets.JWT_SECRET_KEY }}\"",
             "export MAIL_APP_PWD=\"${{ secrets.MAIL_APP_PWD }}\"",
+            "export GOOGLE_CLIENT_ID=\"${{ secrets.GOOGLE_CLIENT_ID }}\"",
+            "export GOOGLE_CLIENT_SECRET=\"${{ secrets.GOOGLE_CLIENT_SECRET }}\"",
             "docker compose -f ~/docker-compose.prod.yml pull",
             "docker compose -f ~/docker-compose.prod.yml up -d",
             "docker system prune -af"
