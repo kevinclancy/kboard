@@ -26,6 +26,8 @@ pub struct Model {
     pub magic_link_expiration: Option<DateTimeWithTimeZone>,
     pub is_moderator: bool,
     pub is_banned: bool,
+    #[sea_orm(unique)]
+    pub google_id: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

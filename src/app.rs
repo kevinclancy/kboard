@@ -49,6 +49,7 @@ impl Hooks for App {
     fn routes(_ctx: &AppContext) -> AppRoutes {
         AppRoutes::with_default_routes() // controller routes below
             .add_route(controllers::auth::routes())
+            .add_route(controllers::google_auth::routes())
             .add_route(controllers::boards::routes())
             .add_route(controllers::search::routes())
             .add_route(controllers::users::routes())

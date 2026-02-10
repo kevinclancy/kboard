@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { Box, Button, HStack, Separator, Stack, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
@@ -85,7 +85,7 @@ export function KBoard({ uiState }: KBoardProps) {
       case "register":
         return <RegisterForm />;
       case "login":
-        return <LoginForm onLogin={handleLogin} />;
+        return <LoginForm />;
       case "reset_password":
         return <ResetPasswordForm />;
       case "new_password":

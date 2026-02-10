@@ -118,6 +118,13 @@ auth:
       from: Cookie
       name: jwt
 
+# Custom settings
+settings:
+  google_oauth:
+    client_id: {{ get_env(name="GOOGLE_CLIENT_ID", default="") }}
+    client_secret: {{ get_env(name="GOOGLE_CLIENT_SECRET", default="") }}
+    redirect_uri: "http://localhost:5150/api/auth/google/callback"
+
 scheduler:
   # A list of jobs to be scheduled.
   jobs:

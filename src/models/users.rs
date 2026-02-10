@@ -119,6 +119,43 @@ impl Model {
         user.ok_or_else(|| ModelError::EntityNotFound)
     }
 
+    /// finds a user by the provided Google ID
+    pub async fn find_by_google_id(db: &DatabaseConnection, google_id: &str) -> ModelResult<Self> {
+        let user = users::Entity::find()
+            .filter(
+                model::query::condition()
+                    .eq(users::Column::GoogleId, google_id)
+                    .build(),
+            )
+            .one(db)
+            .await?;
+        user.ok_or_else(|| ModelError::EntityNotFound)
+    }
+
+    /// Creates a user from Google OAuth data, or returns existing user if google_id already exists
+    pub async fn find_or_create_from_google(
+        db: &DatabaseConnection,
+        google_id: &str,
+        email: &str,
+        name: &str,
+    ) -> ModelResult<Self> {
+        if let Ok(user) = Self::find_by_google_id(db, google_id).await {
+            return Ok(user);
+        }
+
+        let user = users::ActiveModel {
+            email: ActiveValue::set(email.to_string()),
+            password: ActiveValue::set(String::new()),
+            name: ActiveValue::set(name.to_string()),
+            google_id: ActiveValue::set(google_id.to_string()),
+            ..Default::default()
+        }
+        .insert(db)
+        .await?;
+
+        Ok(user)
+    }
+
     /// finds a user by the provided verification token
     ///
     /// # Errors
