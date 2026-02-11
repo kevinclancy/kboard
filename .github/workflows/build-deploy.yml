@@ -78,15 +78,14 @@ jobs:
           --parameters 'commands=[
             "set -e",
             "aws s3 cp s3://${{ secrets.DEPLOYMENT_BUCKET }}/docker-compose.prod.yml ~/docker-compose.prod.yml",
-            "export DOCKER_REGISTRY=\"${{ secrets.DOCKERHUB_USERNAME }}\"",
-            "export IMAGE_TAG=\"${{ github.sha }}\"",
-            "export JWT_SECRET_KEY=\"${{ secrets.JWT_SECRET_KEY }}\"",
-            "export MAIL_APP_PWD=\"${{ secrets.MAIL_APP_PWD }}\"",
-            "export GOOGLE_CLIENT_ID=\"${{ secrets.GOOGLE_CLIENT_ID }}\"",
-            "export GOOGLE_CLIENT_SECRET=\"${{ secrets.GOOGLE_CLIENT_SECRET }}\"",
-            "docker compose -f ~/docker-compose.prod.yml pull",
-            "docker compose -f ~/docker-compose.prod.yml up -d",
-            "docker system prune -af"
+            "printf \"DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}\nIMAGE_TAG=${{ github.sha }}\nJWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}\nMAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}\nGOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}\nGOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}\n\" > ~/kboard.env",
+            "docker compose -f ~/docker-compose.prod.yml --env-file ~/kboard.env pull",
+            "docker stop $(docker ps -q) || true",
+            "docker rm $(docker ps -aq) || true",
+            "docker volume rm root_webserver_data ec2-user_webserver_data || true",
+            "docker compose -f ~/docker-compose.prod.yml --env-file ~/kboard.env up -d",
+            "sleep 10 && docker system prune -af --filter until=5m",
+            "rm ~/kboard.env"
           ]' \
           --query 'Command.CommandId' \
           --output text)
