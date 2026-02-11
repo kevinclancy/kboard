@@ -2,14 +2,10 @@ import { useState } from "react";
 import { Box, Button, HStack, Separator, Stack, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
-import { RegisterForm } from "./RegisterForm";
 import { BoardSelector } from "./BoardSelector";
 import { DiscussionBoard } from "./DiscussionBoard";
 import { ThreadViewer } from "./ThreadViewer";
 import { LoginForm } from "./LoginForm";
-import { ResetPasswordForm } from "./ResetPasswordForm";
-import { NewPasswordForm } from "./NewPasswordForm";
-import { VerifyEmail } from "./VerifyEmail";
 import { AboutMe } from "./AboutMe";
 import { SearchResults } from "./SearchResults";
 import { Profile } from "./Profile";
@@ -31,16 +27,8 @@ export type UIState =
   | { type: "about_me" }
   // Search results page is displayed
   | { type: "search"; searchQuery: string }
-  // Registration form is displayed
-  | { type: "register" }
   // Login form is displayed
   | { type: "login" }
-  // Reset password form is displayed
-  | { type: "reset_password" }
-  // New password with key is displayed
-  | { type: "new_password" }
-  // Email verification is displayed
-  | { type: "verify_email"; verifyToken: string }
   // User profile form is displayed
   | { type: "profile" };
 
@@ -55,10 +43,6 @@ export function KBoard({ uiState }: KBoardProps) {
       ? { type: "logged_in", username: usernameCookie}
       : { type: "logged_out" }
   );
-
-  const handleLogin = (token: string, username: string) => {
-    setAuthState({ type: "logged_in", username });
-  };
 
   const handleUsernameUpdate = (newUsername: string) => {
     setAuthState({ type: "logged_in", username: newUsername });
@@ -82,17 +66,8 @@ export function KBoard({ uiState }: KBoardProps) {
         return <AboutMe />;
       case "search":
         return <SearchResults searchQuery={uiState.searchQuery} />;
-      case "register":
-        return <RegisterForm />;
       case "login":
         return <LoginForm />;
-      case "reset_password":
-        return <ResetPasswordForm />;
-      case "new_password":
-        const resetKey = window.location.hash.substring(1);
-        return <NewPasswordForm resetKey={resetKey} />;
-      case "verify_email":
-        return <VerifyEmail verifyToken={uiState.verifyToken} login={handleLogin} />;
       case "profile":
         return <Profile authState={authState} onAuthenticationError={logout} onUsernameUpdate={handleUsernameUpdate} />;
     }
@@ -134,12 +109,6 @@ export function KBoard({ uiState }: KBoardProps) {
                 </Button>
               </>
             )}
-            <Link to="/register">
-              <Button bgColor="brown">Register</Button>
-            </Link>
-            <Link to="/request_reset">
-              <Button bgColor="brown">Reset Password</Button>
-            </Link>
             <Link to="/about">
               <Button bgColor="blue.700">
                 About Me

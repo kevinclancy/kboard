@@ -32,26 +32,6 @@ function ThreadViewerPage() {
   return <KBoard uiState={uiState} />;
 }
 
-function VerifyEmailPage() {
-  const { verifyToken } = useParams<{ verifyToken: string }>();
-
-  if (!verifyToken) {
-    return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <h1>Invalid Verification Link</h1>
-        <p>The verification link is missing required parameters. Please check the link and try again.</p>
-      </div>
-    );
-  }
-
-  const uiState: UIState = {
-    type: "verify_email",
-    verifyToken: verifyToken
-  };
-
-  return <KBoard uiState={uiState} />;
-}
-
 function SearchPage() {
   const { query } = useParams<{ query: string }>();
   const searchQuery = query ? decodeURIComponent(query) : "";
@@ -75,16 +55,12 @@ ReactDOM.createRoot(root).render(
     <BrowserRouter>
       <ChakraProvider value={system}>
         <Routes>
-          <Route path="/register" element={<KBoard uiState={{ type: "register" }} />} />
           <Route path="/boards" element={<KBoard uiState={{ type: "board" }} />} />
           <Route path="/boards/:boardId/threads" element={<DiscussionBoardPage />} />
           <Route path="/boards/:boardId/threads/:threadId" element={<ThreadViewerPage />} />
           <Route path="/about" element={<KBoard uiState={{ type: "about_me" }} />} />
           <Route path="/search/:query" element={<SearchPage />} />
           <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
-          <Route path="/request_reset" element={<KBoard uiState={{ type: "reset_password" }} />} />
-          <Route path="/reset" element={<KBoard uiState={{ type: "new_password" }} />} />
-          <Route path="/verify/:verifyToken" element={<VerifyEmailPage />} />
           <Route path="/profile" element={<KBoard uiState={{ type: "profile" }} />} />
           <Route path="*" element={<KBoard uiState={{ type: "board" }} />} />
         </Routes>
