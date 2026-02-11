@@ -82,7 +82,6 @@ jobs:
             "docker compose -f ~/docker-compose.prod.yml --env-file ~/kboard.env pull",
             "docker stop $(docker ps -q) || true",
             "docker rm $(docker ps -aq) || true",
-            "docker volume rm root_webserver_data ec2-user_webserver_data || true",
             "docker compose -f ~/docker-compose.prod.yml --env-file ~/kboard.env up -d",
             "sleep 10 && docker system prune -af --filter until=5m",
             "rm ~/kboard.env"
