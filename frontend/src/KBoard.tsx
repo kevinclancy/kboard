@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Box, Button, HStack, Separator, Stack, Text } from "@chakra-ui/react";
 import { Link } from "react-router-dom";
 import Cookies from 'js-cookie';
+import { API_ROOT } from "./config";
 import { BoardSelector } from "./BoardSelector";
 import { DiscussionBoard } from "./DiscussionBoard";
 import { ThreadViewer } from "./ThreadViewer";
-import { LoginForm } from "./LoginForm";
 import { AboutMe } from "./AboutMe";
 import { SearchResults } from "./SearchResults";
 import { Profile } from "./Profile";
@@ -27,8 +27,6 @@ export type UIState =
   | { type: "about_me" }
   // Search results page is displayed
   | { type: "search"; searchQuery: string }
-  // Login form is displayed
-  | { type: "login" }
   // User profile form is displayed
   | { type: "profile" };
 
@@ -66,8 +64,6 @@ export function KBoard({ uiState }: KBoardProps) {
         return <AboutMe />;
       case "search":
         return <SearchResults searchQuery={uiState.searchQuery} />;
-      case "login":
-        return <LoginForm />;
       case "profile":
         return <Profile authState={authState} onAuthenticationError={logout} onUsernameUpdate={handleUsernameUpdate} />;
     }
@@ -92,11 +88,11 @@ export function KBoard({ uiState }: KBoardProps) {
               </Button>
             </Link>
             {authState.type === "logged_out" ? (
-              <Link to="/login">
+              <a href={`${API_ROOT}/auth/google`}>
                 <Button bgColor="brown">
-                  Login
+                  Login with Google
                 </Button>
-              </Link>
+              </a>
             ) : (
               <>
                 <Link to="/profile">

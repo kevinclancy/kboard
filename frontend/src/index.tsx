@@ -60,7 +60,6 @@ ReactDOM.createRoot(root).render(
           <Route path="/boards/:boardId/threads/:threadId" element={<ThreadViewerPage />} />
           <Route path="/about" element={<KBoard uiState={{ type: "about_me" }} />} />
           <Route path="/search/:query" element={<SearchPage />} />
-          <Route path="/login" element={<KBoard uiState={{ type: "login" }} />} />
           <Route path="/profile" element={<KBoard uiState={{ type: "profile" }} />} />
           <Route path="*" element={<KBoard uiState={{ type: "board" }} />} />
         </Routes>
