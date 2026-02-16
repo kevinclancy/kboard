@@ -30,15 +30,6 @@ resource "aws_security_group" "web_server" {
     description = "HTTPS access"
   }
 
-  # Custom application port (Loco backend)
-  ingress {
-    from_port   = 5150
-    to_port     = 5150
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "Loco application port"
-  }
-
   # Allow all outbound traffic
   egress {
     from_port   = 0
