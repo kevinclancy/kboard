@@ -29,7 +29,8 @@ async fn test_create() {
         "Car crash.".to_string(),
         1,
         2,
-        "I got in a car crash and broke my jaw.".to_string()
+        "I got in a car crash and broke my jaw.".to_string(),
+        None,
     ).await.unwrap();
 
     assert_yaml_snapshot!(thread,

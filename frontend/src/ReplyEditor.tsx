@@ -1,6 +1,7 @@
-import { Box, Text, VStack, Input, Textarea, Button, HStack } from "@chakra-ui/react";
+import { Box, Text, VStack, Input, Textarea, Button, HStack, Image } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { API_ROOT } from "./config";
+import { ImageUploadState, validateFile, getPresignedUrl, uploadToS3 } from "./imageUpload";
 
 type ReplyMode =
   | { type: "new_thread"; boardId: number }
@@ -31,6 +32,44 @@ export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError,
   const [replyToData, setReplyToData] = useState<Reply | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageState, setImageState] = useState<ImageUploadState>({ type: "none" });
+
+  useEffect(() => {
+    return () => {
+      if (imageState.type === "uploaded") {
+        URL.revokeObjectURL(imageState.previewUrl);
+      }
+    };
+  }, [imageState]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validationError = validateFile(file);
+    if (validationError) {
+      setImageState({ type: "error", message: validationError });
+      return;
+    }
+
+    setImageState({ type: "uploading", file });
+
+    try {
+      const { upload_url, pending_key } = await getPresignedUrl(file.type);
+      await uploadToS3(upload_url, file);
+      const previewUrl = URL.createObjectURL(file);
+      setImageState({ type: "uploaded", file, pendingKey: pending_key, previewUrl });
+    } catch (err) {
+      setImageState({ type: "error", message: "Failed to upload image. Please try again." });
+    }
+  };
+
+  const removeImage = () => {
+    if (imageState.type === "uploaded") {
+      URL.revokeObjectURL(imageState.previewUrl);
+    }
+    setImageState({ type: "none" });
+  };
 
   // Fetch reply_to data if in existing thread mode with replyTo
   useEffect(() => {
@@ -90,6 +129,7 @@ export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError,
           body: JSON.stringify({
             title: title,
             initial_reply_text: replyText,
+            pending_image_key: imageState.type === "uploaded" ? imageState.pendingKey : null,
           }),
         });
 
@@ -117,6 +157,7 @@ export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError,
           body: JSON.stringify({
             body: replyText,
             reply_to: replyMode.replyTo || null,
+            pending_image_key: imageState.type === "uploaded" ? imageState.pendingKey : null,
           }),
         });
 
@@ -141,6 +182,7 @@ export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError,
           },
           body: JSON.stringify({
             body: replyText,
+            pending_image_key: imageState.type === "uploaded" ? imageState.pendingKey : null,
           }),
         });
 
@@ -212,6 +254,31 @@ export function ReplyEditor({ replyMode, onPostSucceeded, onAuthenticationError,
             onChange={(e) => setReplyText(e.target.value)}
             rows={6}
           />
+        </Box>
+
+        {/* Image attachment */}
+        <Box>
+          <Text fontWeight="bold" mb={2}>Attach Image</Text>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            onChange={handleFileSelect}
+            disabled={imageState.type === "uploading"}
+          />
+          {imageState.type === "uploading" && (
+            <Text fontSize="sm" color="gray.500" mt={1}>Uploading...</Text>
+          )}
+          {imageState.type === "uploaded" && (
+            <Box mt={2}>
+              <Image src={imageState.previewUrl} maxH="150px" borderRadius="md" />
+              <Button size="sm" variant="outline" mt={1} onClick={removeImage}>
+                Remove
+              </Button>
+            </Box>
+          )}
+          {imageState.type === "error" && (
+            <Text fontSize="sm" color="red.500" mt={1}>{imageState.message}</Text>
+          )}
         </Box>
 
         {/* Submit and Cancel buttons */}

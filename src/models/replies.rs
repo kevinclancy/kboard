@@ -17,6 +17,7 @@ pub struct ReplyResponse {
     pub poster_is_banned: bool,
     pub updated_at: DateTimeWithTimeZone,
     pub reply_status: i32,
+    pub image_url: Option<String>,
 }
 
 #[async_trait::async_trait]
@@ -44,12 +45,14 @@ impl Model {
     /// * thread_id - id of the thread that this reply is inside
     /// * poster - id of the poster that created this reply
     /// * reply_to - Optional id of a reply that this reply is responding to
+    /// * pending_image_key - Optional S3 key of a pending image upload
     pub async fn create(
         db: &DatabaseConnection,
         body: String,
         thread_id: i32,
         poster: i32,
         reply_to: Option<i32>,
+        pending_image_key: Option<String>,
     ) -> Result<Self, DbErr> {
         let txn = db.begin().await?;
 
@@ -61,7 +64,21 @@ impl Model {
             ..Default::default()
         };
 
-        let result = reply.insert(&txn).await?;
+        let mut result = reply.insert(&txn).await?;
+
+        if let Some(pending_key) = pending_image_key {
+            match crate::s3::move_pending_to_reply(&pending_key, result.id).await {
+                Ok(final_key) => {
+                    use sea_orm::Set;
+                    let mut active: ActiveModel = result.clone().into();
+                    active.image_key = Set(Some(final_key.clone()));
+                    result = active.update(&txn).await?;
+                }
+                Err(e) => {
+                    tracing::error!("Failed to move image from pending: {e}");
+                }
+            }
+        }
 
         // Update thread num_replies count
         use crate::models::threads::{Entity as ThreadEntity, Column as ThreadColumn};
@@ -116,18 +133,19 @@ impl Entity {
                 Column::Poster,
                 Column::UpdatedAt,
                 Column::ReplyStatus,
+                Column::ImageKey,
             ])
             .column_as(users::users::Column::Name, "poster_username")
             .column_as(users::users::Column::IsBanned, "poster_is_banned")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::Body)), "parent_body")
             .column_as(Expr::col(("parent_reply", crate::models::_entities::replies::Column::ReplyStatus)), "parent_status")
-            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, i32, String, bool, Option<String>, Option<i32>)>()
+            .into_tuple::<(i32, String, Option<i32>, i32, i32, DateTimeWithTimeZone, i32, Option<String>, String, bool, Option<String>, Option<i32>)>()
             .all(db)
             .await?;
 
         let result = replies_with_data
             .into_iter()
-            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, reply_status, poster_username, poster_is_banned, parent_body, parent_status)| {
+            .map(|(id, body, reply_to_id, thread_id, poster, updated_at, reply_status, image_key, poster_username, poster_is_banned, parent_body, parent_status)| {
                 let reply_to = match (reply_to_id, parent_body, parent_status) {
                     (Some(id), Some(text), Some(status)) => Some((id, text, status)),
                     (None, None, None) => None,
@@ -144,6 +162,7 @@ impl Entity {
                     poster_is_banned,
                     updated_at,
                     reply_status,
+                    image_url: image_key.map(|k| crate::s3::public_image_url(&k)),
                 }
             })
             .collect();

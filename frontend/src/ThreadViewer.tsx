@@ -1,4 +1,4 @@
-import { Box, Text, VStack, Spinner, HStack, IconButton, Breadcrumb, Button } from "@chakra-ui/react";
+import { Box, Text, VStack, Spinner, HStack, IconButton, Breadcrumb, Button, Image } from "@chakra-ui/react";
 import { Pagination } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -18,6 +18,7 @@ interface Reply {
   poster_is_banned: boolean;
   updated_at: string;
   reply_status: number;
+  image_url: string | null;
 }
 
 type ReplyEditorState =
@@ -513,9 +514,16 @@ export function ThreadViewer({ boardId, threadId, authState, onAuthenticationErr
                         onCancel={() => setReplyEditorState({ type: "closed" })}
                       />
                     ) : (
-                      <Text whiteSpace="pre-wrap" color={reply.reply_status === DELETED ? "gray.500" : "inherit"} fontStyle={reply.reply_status === DELETED ? "italic" : "normal"}>
-                        {reply.reply_status === DELETED ? "This reply has been deleted" : reply.body}
-                      </Text>
+                      <>
+                        <Text whiteSpace="pre-wrap" color={reply.reply_status === DELETED ? "gray.500" : "inherit"} fontStyle={reply.reply_status === DELETED ? "italic" : "normal"}>
+                          {reply.reply_status === DELETED ? "This reply has been deleted" : reply.body}
+                        </Text>
+                        {reply.reply_status !== DELETED && reply.image_url && (
+                          <a href={reply.image_url} target="_blank" rel="noopener noreferrer">
+                            <Image src={reply.image_url} maxH="400px" mt={2} borderRadius="md" />
+                          </a>
+                        )}
+                      </>
                     )}
                   </Box>
                 </VStack>

@@ -45,6 +45,7 @@ impl Model {
         board_id: i32,
         poster_id: i32,
         initial_reply_text: String,
+        pending_image_key: Option<String>,
     ) -> Result<Model> {
         let txn = db.begin().await?;
 
@@ -68,7 +69,20 @@ impl Model {
             poster: Set(poster_id),
             ..Default::default()
         };
-        reply.insert(&txn).await?;
+        let reply = reply.insert(&txn).await?;
+
+        if let Some(pending_key) = pending_image_key {
+            match crate::s3::move_pending_to_reply(&pending_key, reply.id).await {
+                Ok(final_key) => {
+                    let mut active: replies::ActiveModel = reply.into();
+                    active.image_key = Set(Some(final_key));
+                    active.update(&txn).await?;
+                }
+                Err(e) => {
+                    tracing::error!("Failed to move image from pending: {e}");
+                }
+            }
+        }
 
         let board = boards::Entity::find_by_id(board_id)
             .one(&txn)

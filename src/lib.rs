@@ -1,5 +1,6 @@
 pub mod app;
 pub mod controllers;
+pub mod s3;
 pub mod data;
 pub mod initializers;
 pub mod mailers;

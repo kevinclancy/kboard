@@ -154,6 +154,7 @@ async fn can_post_reply() {
     let payload = CreateReplyRequest {
         body: "Ya. That sounds bad.".to_string(),
         reply_to: Some(1),
+        pending_image_key: None,
     };
 
     request::<App, _, _>(|request, ctx| async move {

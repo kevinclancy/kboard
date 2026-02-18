@@ -15,6 +15,7 @@ mod m20250802_225354_add_is_moderator_and_is_banned_to_users;
 mod m20250802_230712_add_is_deleted_to_threads;
 mod m20250804_210454_reply_statuses;
 mod m20250806_000954_add_reply_status_ref_to_replies;
+mod m20260216_000000_add_image_key_to_replies;
 pub struct Migrator;
 
 #[async_trait::async_trait]
@@ -34,6 +35,7 @@ impl MigratorTrait for Migrator {
             Box::new(m20250802_230712_add_is_deleted_to_threads::Migration),
             Box::new(m20250804_210454_reply_statuses::Migration),
             Box::new(m20250806_000954_add_reply_status_ref_to_replies::Migration),
+            Box::new(m20260216_000000_add_image_key_to_replies::Migration),
             // inject-above (do not remove this comment)
         ]
     }

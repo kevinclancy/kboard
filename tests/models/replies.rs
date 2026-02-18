@@ -29,7 +29,8 @@ async fn test_create() {
         "I've had some bad experiences with seagulls myself.".to_string(),
         1,
         2,
-        Some(1)
+        Some(1),
+        None,
     ).await.unwrap();
 
     assert_yaml_snapshot!(reply,

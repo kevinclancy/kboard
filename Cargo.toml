@@ -39,6 +39,8 @@ include_dir = { version = "0.7" }
 axum-extra = { version = "0.10", features = ["form"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 urlencoding = "2.1"
+aws-config = { version = "1", features = ["behavior-version-latest"] }
+aws-sdk-s3 = "1"
 
 [[bin]]
 name = "kboard-cli"

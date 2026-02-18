@@ -49,6 +49,31 @@ resource "aws_iam_role_policy" "s3_deployment_access" {
   })
 }
 
+# Attach policy for S3 access (for images bucket)
+resource "aws_iam_role_policy" "s3_images_access" {
+  name = "S3ImagesAccess"
+  role = aws_iam_role.ssm_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject",
+          "s3:ListBucket"
+        ]
+        Resource = [
+          aws_s3_bucket.images.arn,
+          "${aws_s3_bucket.images.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
 # Instance profile to attach role to EC2
 resource "aws_iam_instance_profile" "ssm_profile" {
   name = "SSMPolicy"

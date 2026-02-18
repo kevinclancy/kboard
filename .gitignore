@@ -17,3 +17,6 @@ target/
 
 *.sqlite
 *.sqlite-*
+
+# environment for local testing
+kboard.env

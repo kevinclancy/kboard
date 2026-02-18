@@ -78,7 +78,7 @@ jobs:
           --parameters 'commands=[
             "set -e",
             "aws s3 cp s3://${{ secrets.DEPLOYMENT_BUCKET }}/docker-compose.prod.yml ~/docker-compose.prod.yml",
-            "printf \"DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}\nIMAGE_TAG=${{ github.sha }}\nJWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}\nMAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}\nGOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}\nGOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}\n\" > ~/kboard.env",
+            "printf \"DOCKER_REGISTRY=${{ secrets.DOCKERHUB_USERNAME }}\nIMAGE_TAG=${{ github.sha }}\nJWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}\nMAIL_APP_PWD=${{ secrets.MAIL_APP_PWD }}\nGOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}\nGOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}\nIMAGES_BUCKET_NAME=${{ secrets.IMAGES_BUCKET_NAME }}\nAWS_REGION=${{ secrets.AWS_REGION }}\nAWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}\nAWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}\n\" > ~/kboard.env",
             "docker compose -f ~/docker-compose.prod.yml --env-file ~/kboard.env pull",
             "docker stop $(docker ps -q) || true",
             "docker rm $(docker ps -aq) || true",

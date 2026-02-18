@@ -16,6 +16,8 @@ pub struct Model {
     pub thread_id: i32,
     pub poster: i32,
     pub reply_status: i32,
+    #[sea_orm(column_type = "Text", nullable)]
+    pub image_key: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

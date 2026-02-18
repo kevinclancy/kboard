@@ -35,6 +35,7 @@ pub struct RepliesResponse {
 struct CreateThreadRequest {
     title: String,
     initial_reply_text: String,
+    pending_image_key: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -46,6 +47,7 @@ struct CreateThreadResponse {
 pub struct CreateReplyRequest {
     pub body: String,
     pub reply_to: Option<i32>,
+    pub pending_image_key: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -67,6 +69,9 @@ pub struct FindReplyPageResponse {
 #[derive(Deserialize)]
 struct UpdateReplyRequest {
     body: String,
+    pending_image_key: Option<String>,
+    #[serde(default)]
+    remove_image: bool,
 }
 
 #[derive(Deserialize)]
@@ -158,6 +163,7 @@ async fn create_thread(
         board_id,
         user.id,
         req.initial_reply_text,
+        req.pending_image_key,
     ).await?;
 
     let response = CreateThreadResponse {
@@ -197,6 +203,7 @@ async fn create_reply(
         thread_id,
         user.id,
         req.reply_to,
+        req.pending_image_key,
     ).await?;
 
     let response = CreateReplyResponse {
@@ -227,10 +234,38 @@ async fn update_reply(
         return Err(loco_rs::Error::Unauthorized("You can only edit your own replies".to_string()));
     }
 
-    // Update the reply
+    assert!(
+        !(req.remove_image && req.pending_image_key.is_some()),
+        "Cannot both remove image and attach a new image"
+    );
+
+    // Handle image changes
+    let new_image_key = if req.remove_image {
+        if let Some(ref key) = reply.image_key {
+            let _ = crate::s3::delete_image(key).await;
+        }
+        Some(None)
+    } else if let Some(pending_key) = req.pending_image_key {
+        if let Some(ref old_key) = reply.image_key {
+            let _ = crate::s3::delete_image(old_key).await;
+        }
+        match crate::s3::move_pending_to_reply(&pending_key, reply_id).await {
+            Ok(final_key) => Some(Some(final_key)),
+            Err(e) => {
+                tracing::error!("Failed to move image from pending: {e}");
+                None
+            }
+        }
+    } else {
+        None
+    };
+
     use sea_orm::{ActiveModelTrait, Set};
     let mut active_reply: crate::models::replies::ActiveModel = reply.into();
     active_reply.body = Set(req.body);
+    if let Some(image_key) = new_image_key {
+        active_reply.image_key = Set(image_key);
+    }
     active_reply.update(&ctx.db).await?;
 
     format::json(serde_json::json!({"success": true}))

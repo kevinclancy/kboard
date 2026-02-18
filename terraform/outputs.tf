@@ -22,3 +22,8 @@ output "deployment_bucket_name" {
   description = "S3 deployment bucket name"
   value       = aws_s3_bucket.deployment.bucket
 }
+
+output "images_bucket_name" {
+  description = "S3 images bucket name"
+  value       = aws_s3_bucket.images.bucket
+}
