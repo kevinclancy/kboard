@@ -21,6 +21,11 @@ services:
     tty: false
     stdin_open: false
 
+  prerender:
+    image: tvanro/prerender-alpine:latest
+    networks:
+      - kboard_network
+
   nginx:
     build: nginx/
     volumes:
@@ -29,6 +34,7 @@ services:
       - "80:80"
     depends_on:
       - webserver
+      - prerender
     networks:
       - kboard_network
 

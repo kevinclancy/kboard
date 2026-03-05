@@ -19,6 +19,12 @@ services:
       - kboard_network
     restart: unless-stopped
 
+  prerender:
+    image: tvanro/prerender-alpine:latest
+    networks:
+      - kboard_network
+    restart: unless-stopped
+
   nginx:
     image: ${DOCKER_REGISTRY}/kboard-nginx:${IMAGE_TAG:-latest}
     ports:
@@ -27,6 +33,7 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - webserver
+      - prerender
     networks:
       - kboard_network
     restart: unless-stopped
